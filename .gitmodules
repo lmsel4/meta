@@ -1,0 +1,21 @@
+[submodule "kernel"]
+	path = kernel
+	url = git@github.com:seL4/seL4.git
+[submodule "projects/tools"]
+	path = projects/tools
+	url = git@github.com:seL4/seL4_tools.git
+[submodule "libs/libmuslc"]
+	path = libs/libmuslc
+	url = git@github.com:seL4/musllibc.git
+[submodule "projects/seL4_libs"]
+	path = projects/seL4_libs
+	url = git@github.com:seL4/seL4_libs.git
+[submodule "projects/util_libs"]
+	path = projects/util_libs
+	url = git@github.com:seL4/util_libs.git
+[submodule "projects/sel4-tutorials"]
+	path = projects/sel4-tutorials
+	url = git@github.com:SEL4PROJ/sel4-tutorials.git
+[submodule "projects/sel4-tutorials-manifest"]
+	path = projects/sel4-tutorials-manifest
+	url = git@github.com:SEL4PROJ/sel4-tutorials-manifest.git
