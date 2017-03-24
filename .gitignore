@@ -1,5 +1,7 @@
 # generated
 /.config
+/.config.old
 /build/
 /include/
 /stage/
+/images/
