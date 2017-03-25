@@ -1,0 +1,9 @@
+config LIB_LINUX
+    bool "liblinux"
+    default y
+    select HAVE_LIB_LINUX
+    help
+        Library for linux compatibility
+
+config HAVE_LIB_LINUX
+    bool
