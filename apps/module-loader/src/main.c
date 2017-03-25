@@ -47,11 +47,8 @@ static uint64_t thread_2_stack[THREAD_2_STACK_SIZE];
 
 extern void name_thread(seL4_CPtr tcb, char *name);
 
-void thread_2(void) {
-    debug("Init has given birth to me!");
-
-    while (1);
-}
+// module hardcode
+extern int hello_init(void);
 
 int main(void)
 {
@@ -112,7 +109,7 @@ int main(void)
 
     // create registers
     seL4_UserContext regs = {0};
-    sel4utils_set_instruction_pointer(&regs, (seL4_Word) thread_2);
+    sel4utils_set_instruction_pointer(&regs, (seL4_Word) hello_init);
 
     // check stack is aligned correctly
     const int stack_alignment_requirement = sizeof(seL4_Word) * 2;
