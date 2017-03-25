@@ -18,4 +18,4 @@ module-loader-y = common libsel4 libmuslc \
             libsel4platsupport \
             libutils libsel4simple-default libsel4utils libsel4debug
 
-module-loader-3: kernel_elf $(module-loader-y)
+module-loader: kernel_elf $(module-loader-y)
