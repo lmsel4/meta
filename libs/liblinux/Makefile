@@ -1,12 +1,14 @@
 # Targets
 TARGETS := liblinux.a
 
-# Source files required to build the target
-CFILES := $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/*.c))
-
 # Header files/directories this library provides
-HDRFILES := $(wildcard $(SOURCE_DIR)/include/*)
+HDRFILES := $(wildcard $(SOURCE_DIR)/include/*) \
+            $(wildcard ${SOURCE_DIR}/include/${ARCH}/*) \
+            $(wildcard ${SOURCE_DIR}/arch_include/${ARCH}/*)
 
-CFLAGS += -Wall -Wextra
+# Source files required to build the target
+CFILES := $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/kernel/printk/*.c))
+
+CFLAGS += -Wall -Wextra -g -Werror
 
 include $(SEL4_COMMON)/common.mk
