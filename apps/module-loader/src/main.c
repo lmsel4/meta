@@ -48,13 +48,75 @@ static uint64_t thread_2_stack[THREAD_2_STACK_SIZE];
 extern void name_thread(seL4_CPtr tcb, char *name);
 
 // module hardcode
-extern int (*hello_init)(void)     asm("__initcall_hello_init6");
+extern int  (*hello_init)(void)     asm("__initcall_hello_init6"); // TODO hardcoded
+extern void (*hello_exit)(void)     asm("__exitcall_hello_exit"); // TODO hardcoded
+
+int module_handler() {
+    int err;
+
+    err = hello_init();
+    if (err)
+        return err;
+
+    hello_exit();
+
+    return 0;
+}
+
+int spawn_new_module(vka_t const* const vka, seL4_CPtr const cspace_cap,
+                     seL4_CPtr const pd_cap) {
+    int error;
+
+    // create new thread control block (TCB)
+    vka_object_t tcb_object = {0};
+    error = vka_alloc_tcb(vka, &tcb_object);
+    ZF_LOGF_IFERR(error, "Failed to allocate new TCB.\n"
+                  "\tVKA given sufficient bootstrap memory?");
+
+    // fill TCB
+    error = seL4_TCB_Configure(tcb_object.cptr, seL4_CapNull,
+		               seL4_PrioProps_new(seL4_MaxPrio, seL4_MaxPrio),
+			       cspace_cap, seL4_NilData, pd_cap, seL4_NilData, 0, 0);
+    ZF_LOGF_IFERR(error, "Failed to configure the new TCB object.\n"
+                  "\tWe're running the new thread with the root thread's CSpace.\n"
+                  "\tWe're running the new thread in the root thread's VSpace.\n"
+                  "\tWe will not be executing any IPC in this app.\n");
+
+    // give name to thread
+    name_thread(tcb_object.cptr, "module-loader: new-module"); // TODO hardcoded
+
+    // create registers
+    seL4_UserContext regs = {0};
+    sel4utils_set_instruction_pointer(&regs, (seL4_Word) module_handler); // TODO hardcoded
+
+    // check stack is aligned correctly
+    const int stack_alignment_requirement = sizeof(seL4_Word) * 2;
+    uintptr_t thread_2_stack_top = (uintptr_t)thread_2_stack + sizeof(thread_2_stack);
+    ZF_LOGF_IF(thread_2_stack_top % (stack_alignment_requirement) != 0,
+               "Stack top isn't aligned correctly to a %dB boundary.\n"
+               "\tDouble check to ensure you're not trampling.",
+               stack_alignment_requirement);
+
+    // add stack pointer to registers
+    sel4utils_set_stack_pointer(&regs, thread_2_stack_top);
+
+    // write registers to TCB
+    error = seL4_TCB_WriteRegisters(tcb_object.cptr, 0, 0, 2, &regs);
+    ZF_LOGF_IFERR(error, "Failed to write the new thread's register set.\n"
+                  "\tDid you write the correct number of registers? See arg4.\n");
+
+    // start thread
+    error = seL4_TCB_Resume(tcb_object.cptr);
+    ZF_LOGF_IFERR(error, "Failed to start new thread.\n");
+
+    return error;
+}
 
 int main(void)
 {
     debug("Init start");
 
-    UNUSED int error;
+    int error;
 
     // get boot info
     seL4_BootInfo *info;
@@ -89,47 +151,8 @@ int main(void)
     seL4_CPtr pd_cap;
     pd_cap = simple_get_pd(&simple);
 
-    // create new thread control block (TCB)
-    vka_object_t tcb_object = {0};
-    error = vka_alloc_tcb(&vka, &tcb_object);
-    ZF_LOGF_IFERR(error, "Failed to allocate new TCB.\n"
-                  "\tVKA given sufficient bootstrap memory?");
-
-    // fill TCB
-    error = seL4_TCB_Configure(tcb_object.cptr, seL4_CapNull,
-		               seL4_PrioProps_new(seL4_MaxPrio, seL4_MaxPrio),
-			       cspace_cap, seL4_NilData, pd_cap, seL4_NilData, 0, 0);
-    ZF_LOGF_IFERR(error, "Failed to configure the new TCB object.\n"
-                  "\tWe're running the new thread with the root thread's CSpace.\n"
-                  "\tWe're running the new thread in the root thread's VSpace.\n"
-                  "\tWe will not be executing any IPC in this app.\n");
-
-    // give name to thread
-    name_thread(tcb_object.cptr, "hello-2: thread_2");
-
-    // create registers
-    seL4_UserContext regs = {0};
-    sel4utils_set_instruction_pointer(&regs, (seL4_Word) hello_init);
-
-    // check stack is aligned correctly
-    const int stack_alignment_requirement = sizeof(seL4_Word) * 2;
-    uintptr_t thread_2_stack_top = (uintptr_t)thread_2_stack + sizeof(thread_2_stack);
-    ZF_LOGF_IF(thread_2_stack_top % (stack_alignment_requirement) != 0,
-               "Stack top isn't aligned correctly to a %dB boundary.\n"
-               "\tDouble check to ensure you're not trampling.",
-               stack_alignment_requirement);
-
-    // add stack pointer to registers
-    sel4utils_set_stack_pointer(&regs, thread_2_stack_top);
-
-    // write registers to TCB
-    error = seL4_TCB_WriteRegisters(tcb_object.cptr, 0, 0, 2, &regs);
-    ZF_LOGF_IFERR(error, "Failed to write the new thread's register set.\n"
-                  "\tDid you write the correct number of registers? See arg4.\n");
-
-    // start thread
-    error = seL4_TCB_Resume(tcb_object.cptr);
-    ZF_LOGF_IFERR(error, "Failed to start new thread.\n");
+    // spawn the module
+    spawn_new_module(&vka, cspace_cap, pd_cap);
 
     // end of init
     debug("Init is done!");
