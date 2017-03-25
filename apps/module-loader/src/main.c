@@ -48,7 +48,7 @@ static uint64_t thread_2_stack[THREAD_2_STACK_SIZE];
 extern void name_thread(seL4_CPtr tcb, char *name);
 
 // module hardcode
-extern int hello_init(void);
+extern int (*hello_init)(void)     asm("__initcall_hello_init6");
 
 int main(void)
 {

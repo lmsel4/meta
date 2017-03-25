@@ -6,6 +6,7 @@
  * Rewritten by Richard Henderson <rth@tamu.edu> Dec 1996
  * Rewritten again by Rusty Russell, 2002
  */
+#include <linux/init.h>
 
 /**
  * module_init() - driver initialization entry point
@@ -15,7 +16,7 @@
  * builtin) or at module insertion time (if a module).  There can only
  * be one per module.
  */
-void module_init(int (*fn)(void));
+#define module_init(x)  __initcall(x)
 
 /**
  * module_exit() - driver exit entry point
@@ -27,6 +28,6 @@ void module_init(int (*fn)(void));
  * compiled into the kernel, module_exit() has no effect.
  * There can only be one per module.
  */
-void module_exit(void (*fn)(void));
+#define module_exit(x)  __exitcall(x);
 
 #endif /* _LINUX_MODULE_H */

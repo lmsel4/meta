@@ -13,5 +13,5 @@ void hello_exit(void)
 	printk(KERN_INFO "Goodbye world\n");
 }
 
-//module_init(hello_init);
-//module_exit(hello_exit);
+module_init(hello_init);
+module_exit(hello_exit);
