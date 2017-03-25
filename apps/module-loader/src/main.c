@@ -37,120 +37,104 @@
 #define warn(fmt, ...) fprintf(stderr, "WARN: " fmt "\n", ##__VA_ARGS__)
 #define fatal(fmt, ...) { fprintf(stderr, "FATAL: " fmt "\n", ##__VA_ARGS__); exit(1); }
 
-/* global environment variables */
-
-/* seL4_BootInfo defined in bootinfo.h
- * Links to source: https://wiki.sel4.systems/seL4%20Tutorial%202#Globals_links:
-seL4_BootInfo *info;
-
-simple_t defined in simple.h
- * Links to source: https://wiki.sel4.systems/seL4%20Tutorial%202#Globals_links: */
-simple_t simple;
-
-/* vka_t defined in vka.h
- * Links to source: https://wiki.sel4.systems/seL4%20Tutorial%202#Globals_links: */
-vka_t vka;
-
-/* allocaman_t defined in allocman.h
- * Links to source: https://wiki.sel4.systems/seL4%20Tutorial%202#Globals_links: */
-allocman_t *allocman;
-
-/* static memory for the allocator to bootstrap with */
+// static memory for the allocator to bootstrap with
 #define ALLOCATOR_STATIC_POOL_SIZE ((1 << seL4_PageBits) * 10)
 static char allocator_mem_pool[ALLOCATOR_STATIC_POOL_SIZE];
 
-/* stack for the new thread */
+// stack for the new thread
 #define THREAD_2_STACK_SIZE 512
 static uint64_t thread_2_stack[THREAD_2_STACK_SIZE];
 
-/* convenience function in util.c:
- * Links to source: https://wiki.sel4.systems/seL4%20Tutorial%202#Globals_links:
- */
 extern void name_thread(seL4_CPtr tcb, char *name);
 
-/* function to run in the new thread */
 void thread_2(void) {
-    /* TODO 15: print something */
-    /* hint: printf() */
-
     debug("Init has given birth to me!");
 
-    /* never exit */
-    while(1);
+    while (1);
 }
 
 int main(void)
 {
-    int error;
+    debug("Init start");
 
+    UNUSED int error;
+
+    // get boot info
+    seL4_BootInfo *info;
+    info = seL4_GetBootInfo();
+    ZF_LOGF_IF(info == NULL, "Failed to get bootinfo.");
+
+    // set log name
     zf_log_set_tag_prefix("hello-2:");
     name_thread(seL4_CapInitThreadTCB, "hello-2");
 
-    seL4_BootInfo* binfo;
-    seL4_CPtr cnode;
-    seL4_CPtr pagedir;
-    vka_object_t tcb = {0};
+    // init simple struct to get info from kernel
+    simple_t simple;
+    simple_default_init_bootinfo(&simple, info);
 
-    binfo = seL4_GetBootInfo();
-
-    simple_default_init_bootinfo(&simple, binfo);
-
-    simple_print(&simple);
-
-    debug("Bootstrapping allocman...");
+    // create memory allocator
+    allocman_t *allocman;
     allocman = bootstrap_use_current_simple(&simple, ALLOCATOR_STATIC_POOL_SIZE,
                                              allocator_mem_pool);
     ZF_LOGF_IF(allocman == NULL, "Failed to initialize alloc manager.\n"
-        "\tMemory pool sufficiently sized?\n"
-        "\tMemory pool pointer valid?\n");
-    debug("OK!");
+               "\tMemory pool sufficiently sized?\n"
+               "\tMemory pool pointer valid?\n");
 
+    // create kernel allocator
+    vka_t vka;
     allocman_make_vka(&vka, allocman);
 
-    cnode = simple_get_cnode(&simple);
+    // get init capabilities
+    seL4_CPtr cspace_cap;
+    cspace_cap = simple_get_cnode(&simple);
 
-    pagedir = simple_get_pd(&simple);
+    // get init virtual space
+    seL4_CPtr pd_cap;
+    pd_cap = simple_get_pd(&simple);
 
-    error = vka_alloc_tcb(&vka, &tcb);
+    // create new thread control block (TCB)
+    vka_object_t tcb_object = {0};
+    error = vka_alloc_tcb(&vka, &tcb_object);
     ZF_LOGF_IFERR(error, "Failed to allocate new TCB.\n"
-        "\tVKA given sufficient bootstrap memory?");
+                  "\tVKA given sufficient bootstrap memory?");
 
-    debug("Configuring new TCB...");
-    const seL4_PrioProps_t prio = seL4_PrioProps_new(seL4_MaxPrio, seL4_MaxPrio);
-    error = seL4_TCB_Configure(tcb.cptr, seL4_CapNull, prio, cnode,
-                               seL4_NilData, pagedir, seL4_NilData, 0, 0);
+    // fill TCB
+    error = seL4_TCB_Configure(tcb_object.cptr, seL4_CapNull,
+		               seL4_PrioProps_new(seL4_MaxPrio, seL4_MaxPrio),
+			       cspace_cap, seL4_NilData, pd_cap, seL4_NilData, 0, 0);
     ZF_LOGF_IFERR(error, "Failed to configure the new TCB object.\n"
-        "\tWe're running the new thread with the root thread's CSpace.\n"
-        "\tWe're running the new thread in the root thread's VSpace.\n"
-        "\tWe will not be executing any IPC in this app.\n");
-    debug("OK!");
+                  "\tWe're running the new thread with the root thread's CSpace.\n"
+                  "\tWe're running the new thread in the root thread's VSpace.\n"
+                  "\tWe will not be executing any IPC in this app.\n");
 
-    name_thread(tcb.cptr, "new_thread");
+    // give name to thread
+    name_thread(tcb_object.cptr, "hello-2: thread_2");
 
+    // create registers
     seL4_UserContext regs = {0};
-
-    debug("IP: %p", thread_2);
     sel4utils_set_instruction_pointer(&regs, (seL4_Word) thread_2);
 
+    // check stack is aligned correctly
     const int stack_alignment_requirement = sizeof(seL4_Word) * 2;
     uintptr_t thread_2_stack_top = (uintptr_t)thread_2_stack + sizeof(thread_2_stack);
     ZF_LOGF_IF(thread_2_stack_top % (stack_alignment_requirement) != 0,
-        "Stack top isn't aligned correctly to a %dB boundary.\n"
-        "\tDouble check to ensure you're not trampling.",
-        stack_alignment_requirement);
+               "Stack top isn't aligned correctly to a %dB boundary.\n"
+               "\tDouble check to ensure you're not trampling.",
+               stack_alignment_requirement);
 
-    debug("SP: %p", (void *) thread_2_stack_top);
-
+    // add stack pointer to registers
     sel4utils_set_stack_pointer(&regs, thread_2_stack_top);
 
-    error = seL4_TCB_WriteRegisters(tcb.cptr, 0, 0, 2, &regs);
+    // write registers to TCB
+    error = seL4_TCB_WriteRegisters(tcb_object.cptr, 0, 0, 2, &regs);
     ZF_LOGF_IFERR(error, "Failed to write the new thread's register set.\n"
-        "\tDid you write the correct number of registers? See arg4.\n");
+                  "\tDid you write the correct number of registers? See arg4.\n");
 
-    debug("New thread is starting...");
-    error = seL4_TCB_Resume(tcb.cptr);
+    // start thread
+    error = seL4_TCB_Resume(tcb_object.cptr);
     ZF_LOGF_IFERR(error, "Failed to start new thread.\n");
 
+    // end of init
     debug("Init is done!");
 
     return 0;
