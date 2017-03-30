@@ -38,7 +38,26 @@ int append_module(struct module_list* list, struct module* elem)
     return 0;
 }
 
-int traverse_list(struct module_list *list, int (*func) (struct module* mod)) {
+int load_metadata(char** dest, void *dlhandle, metadata_fetcher_t fetcher)
+{
+    const char* ptr = fetcher(dlhandle);
+    size_t len;
+
+    if (!ptr)
+    {
+        *dest = NULL;
+        return -ENOENT;
+    }
+
+    len = strlen(ptr) + 1;
+    *dest = calloc(len, sizeof(char));
+    strncpy(*dest, ptr, len);
+
+    return 0;
+}
+
+int traverse_list(struct module_list *list, int (*func) (struct module* mod))
+{
     assert(list);
 
     int res;

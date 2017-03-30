@@ -42,6 +42,14 @@ typedef const char* (*metadata_fetcher_t) (void *dlhandle);
 int append_module(struct module_list *list, struct module* mod);
 
 /**
+ * Reads a given metadata from the module refered to by dlhandle
+ * @param dest a pointer to a pointer to the destination
+ * @param dlhandle dlopen handle to the module shared object
+ * @param fetcher the function used to fetch the metadata
+ **/
+int load_metadata(char** dest, void* dlhandle, metadata_fetcher_t fetcher);
+
+/**
  * Apply a function to all modules currently registered
  * @param list the list of registered modules
  * @param func the function to apply to each module
@@ -67,7 +75,7 @@ int init_modules(struct module_list* modules);
 
 #define register_init(x)                        \
     {                                           \
-        mod->init = x                           \
+        mod_#x->init = x                        \
     }
 
 // FIXME: for now we assume every call to module_init is done before call
@@ -75,7 +83,7 @@ int init_modules(struct module_list* modules);
 
 #define register_exit(x)                        \
     {                                           \
-        mod->exit = x;                          \
+        mod_#x->exit = x;                       \
     }
 
 
@@ -94,13 +102,13 @@ int init_modules(struct module_list* modules);
 // The module loader can fetch pointers to load_module and unload_module from the .so
 #define module_init(x)                          \
     struct module _mod_#x;                      \
-    int load_module(struct module *mod)         \
+    int MODULE_LOAD_FCN(struct module *mod)             \
     {                                           \
         register_init(x);                       \
     }
 
 #define module_exit(x)                          \
-    int unload_module(struct module *mod)       \
+    int MODULE_UNLOAD_FCN(struct module *mod)       \
     {                                           \
         register_exit(x);                       \
     }
