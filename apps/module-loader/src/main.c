@@ -75,8 +75,8 @@ int spawn_new_module(vka_t const* const vka, seL4_CPtr const cspace_cap,
 
     // fill TCB
     error = seL4_TCB_Configure(tcb_object.cptr, seL4_CapNull,
-		               seL4_PrioProps_new(seL4_MaxPrio, seL4_MaxPrio),
-			       cspace_cap, seL4_NilData, pd_cap, seL4_NilData, 0, 0);
+                               seL4_PrioProps_new(seL4_MaxPrio, seL4_MaxPrio),
+                               cspace_cap, seL4_NilData, pd_cap, seL4_NilData, 0, 0);
     ZF_LOGF_IFERR(error, "Failed to configure the new TCB object.\n"
                   "\tWe're running the new thread with the root thread's CSpace.\n"
                   "\tWe're running the new thread in the root thread's VSpace.\n"
@@ -134,7 +134,7 @@ int main(void)
     // create memory allocator
     allocman_t *allocman;
     allocman = bootstrap_use_current_simple(&simple, ALLOCATOR_STATIC_POOL_SIZE,
-                                             allocator_mem_pool);
+                                            allocator_mem_pool);
     ZF_LOGF_IF(allocman == NULL, "Failed to initialize alloc manager.\n"
                "\tMemory pool sufficiently sized?\n"
                "\tMemory pool pointer valid?\n");

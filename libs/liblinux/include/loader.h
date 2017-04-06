@@ -75,7 +75,7 @@ int init_modules(struct module_list* modules);
 
 #define register_init(x)                        \
     {                                           \
-        mod_#x->init = x                        \
+        mod->init = x                        \
     }
 
 // FIXME: for now we assume every call to module_init is done before call
@@ -83,7 +83,7 @@ int init_modules(struct module_list* modules);
 
 #define register_exit(x)                        \
     {                                           \
-        mod_#x->exit = x;                       \
+        mod->exit = x;                       \
     }
 
 
@@ -100,17 +100,17 @@ int init_modules(struct module_list* modules);
 #define MODULE_LICENSE(lic) char* module_license(void) { return lic; }
 
 // The module loader can fetch pointers to load_module and unload_module from the .so
-#define module_init(x)                          \
-    struct module _mod_#x;                      \
+#define module_init(x)                                  \
+    struct module _mod;                                 \
     int MODULE_LOAD_FCN(struct module *mod)             \
-    {                                           \
-        register_init(x);                       \
-    }
+    {                                                   \
+        register_init(x);                               \
+    }                                                   \
 
-#define module_exit(x)                          \
+#define module_exit(x)                              \
     int MODULE_UNLOAD_FCN(struct module *mod)       \
-    {                                           \
-        register_exit(x);                       \
+    {                                               \
+        register_exit(x);                           \
     }
 
 #endif
