@@ -35,7 +35,7 @@ int hello_init(void)
         return -1;
     }
 
-    zero = kzalloc(sizeof(uint64_t));
+    zero = kzalloc(sizeof(uint64_t), GFP_ATOMIC);
 
     if (*((uint64_t*) zero) != 0)
     {

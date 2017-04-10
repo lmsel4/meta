@@ -9,6 +9,7 @@ HDRFILES := $(wildcard $(SOURCE_DIR)/include/*) \
 # Source files required to build the target
 CFILES := $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/kernel/printk/*.c))
 
-CFLAGS += -Wall -Wextra -g -Werror
+CFLAGS += -Wall -Wextra -g -Werror -Wno-unused-parameter
+CFLAGS += -D__EXPORTED_HEADERS__ -D__KERNEL__ -D__LITTLE_ENDIAN
 
 include $(SEL4_COMMON)/common.mk

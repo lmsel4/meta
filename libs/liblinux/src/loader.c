@@ -10,9 +10,8 @@
 #include <assert.h>
 
 // Libnux headers
-#include <libnux/loader.h>
+#include <loader.h>
 
-static int mod_count = 0;
 static struct module_list all_modules = {
     .mod = NULL,
     .next = NULL

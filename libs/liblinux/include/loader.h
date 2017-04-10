@@ -68,10 +68,10 @@ struct module* find_module(const char* obj);
  **/
 int init_modules(struct module_list* modules);
 
-#define MODULE_LOAD_FCN    "load_module"
-#define MODULE_UNLOAD_FCN  "unload_module"
-#define MODULE_NAME_FCN    "module_name"
-#define MODULE_LICENSE_FCN "module_license"
+#define MODULE_LOAD_FCN    load_module
+#define MODULE_UNLOAD_FCN  unload_module
+#define MODULE_NAME_FCN    module_name
+#define MODULE_LICENSE_FCN module_license
 
 #define register_init(x)                        \
     {                                           \
