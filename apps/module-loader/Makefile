@@ -30,12 +30,14 @@ LIBS = c sel4 sel4muslcsys \
        utils sel4simple-default sel4utils sel4debug \
        linux
 
-# extra cflags 
-CFLAGS += -Wall -Wextra -g
+# extra cflags
+CFLAGS += -g
 
 CFLAGS += -D__KERNEL__ -D__LITTLE_ENDIAN -std=gnu89
 CFLAGS += -DCONFIG_X86_32=y -DCONFIG_TREE_RCU=y
-CFLAGS += -DCONFIG_MCORE2=y
+CFLAGS += -DCONFIG_MCORE2=y -DBITS_PER_LONG=32
+CFLAGS += -include linux/kconfig.h -DCONFIG_HZ=1000
+CFLAGS += -include seL4/types.h
 
 __BASE := $(objtree)/stage/x86/pc99/include/liblinux_include
 CFLAGS += -I$(__BASE)/x86/uapi
@@ -45,4 +47,3 @@ CFLAGS += -I$(__BASE)/uapi
 
 
 include $(SEL4_COMMON)/common.mk
-

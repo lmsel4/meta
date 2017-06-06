@@ -16,6 +16,7 @@ CFLAGS += -I$(__BASE)/x86
 CFLAGS += -I$(__BASE)/x86/uapi
 CFLAGS += -I$(__BASE)/uapi
 CFLAGS += -I$(__BASE)
+CFLAGS += -include seL4/types.h
 
 
 include $(SEL4_COMMON)/common.mk
