@@ -103,4 +103,42 @@ typedef unsigned int __kernel_size_t;
 typedef __kernel_long_t __kernel_off_t;
 #endif
 
+#ifndef __kernel_clockid_t
+#define __kernel_clockid_t __kernel_clockid_t
+typedef int __kernel_clockid_t;
+#endif
+
+#ifndef __kernel_loff_t
+#define __kernel_loff_t __kernel_loff_t
+typedef long long __kernel_loff_t;
+#endif
+
+#ifndef __kernel_ssize_t
+#define __kernel_ssize_t __kernel_ssize_t
+typedef int __kernel_ssize_t;
+#endif
+
+#ifndef __kernel_ptrdiff_t
+#define __kernel_ptrdiff_t __kernel_ptrdiff_t
+typedef int __kernel_ptrdiff_t;
+#endif
+
+#ifndef __kernel_clock_t
+#define __kernel_clock_t __kernel_clock_t
+typedef __kernel_long_t __kernel_clock_t;
+#endif
+
+#ifndef __kernel_caddr_t
+#define __kernel_caddr_t __kernel_caddr_t
+typedef char * __kernel_caddr_t;
+#endif
+
+#define _NSIG 64
+#define _NSIG_BPW 64
+#define _NSIG_WORDS (_NSIG / _NSIG_BPW)
+
+typedef struct {
+    unsigned long sig[_NSIG_WORDS];
+} sigset_t;
+
 #endif

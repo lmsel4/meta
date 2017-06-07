@@ -36,14 +36,18 @@ CFLAGS += -g
 CFLAGS += -D__KERNEL__ -D__LITTLE_ENDIAN -std=gnu89
 CFLAGS += -DCONFIG_X86_32=y -DCONFIG_TREE_RCU=y
 CFLAGS += -DCONFIG_MCORE2=y -DBITS_PER_LONG=32
+CFLAGS += -DHZ=1000 -DMSEC_PER_SEC=1000
 CFLAGS += -include linux/kconfig.h -DCONFIG_HZ=1000
-CFLAGS += -include seL4/types.h
+CFLAGS += -include seL4/types.h -Wno-implicit-function-declaration
+CFLAGS += -Wno-pointer-sign -Wno-shift-count-overflow
+CFLAGS += -include asm/msr-index.h
 
 __BASE := $(objtree)/stage/x86/pc99/include/liblinux_include
 CFLAGS += -I$(__BASE)/x86/uapi
 CFLAGS += -I$(__BASE)/x86
 CFLAGS += -I$(__BASE)
 CFLAGS += -I$(__BASE)/uapi
+CFLAGS += -I$(__BASE)/generated
 
 
 include $(SEL4_COMMON)/common.mk
