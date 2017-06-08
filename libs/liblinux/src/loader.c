@@ -12,7 +12,7 @@
 // Libnux headers
 #include <loader.h>
 
-static struct module_list all_modules = {
+struct module_list all_modules = {
     .mod = NULL,
     .next = NULL
 };
@@ -31,8 +31,6 @@ int append_module(struct module_list* list, struct module* elem)
     list->next = n;
     n->mod = elem;
     n->next = NULL;
-
-    mod_count++;
 
     return 0;
 }
@@ -109,7 +107,7 @@ int find_sym_and_apply(void *dlhandle, const char *sym, struct module* mod)
 
     if (!handler)
     {
-        fprintf(stderr, "Unable to find symbol %s: %s\n", dlerror());
+        fprintf(stderr, "Unable to find symbol %s: %s\n", sym, dlerror());
         return -1;
     }
 
@@ -120,7 +118,6 @@ struct module* find_module(const char* obj)
 {
     struct module* out = malloc(sizeof(struct module));
     void *dlhandle = NULL;
-    module_handler_t loader;
     int res;
 
     dlhandle = dlopen(obj, RTLD_NOW);
@@ -134,7 +131,7 @@ struct module* find_module(const char* obj)
 
     out->dlhandle = dlhandle;
 
-    res = find_sym_and_apply(dlhandle, MODULE_LOAD_FCN, out);
+    res = find_sym_and_apply(dlhandle, "MODULE_LOAD_FCN", out);
 
     if (res < 0)
     {
@@ -143,7 +140,7 @@ struct module* find_module(const char* obj)
         return NULL;
     }
 
-    res = find_sym_and_apply(dlhandle, MODULE_UNLOAD_FCN, out);
+    res = find_sym_and_apply(dlhandle, "MODULE_UNLOAD_FCN", out);
 
     if (res < 0)
     {

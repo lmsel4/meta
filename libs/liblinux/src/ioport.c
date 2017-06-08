@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-// TODO: fix includes
-#include <seL4/io.h>
-
 uint8_t inb(int port)
 {
     return 0;

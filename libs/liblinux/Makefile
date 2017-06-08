@@ -6,10 +6,12 @@ HDRFILES := $(SOURCE_DIR)/liblinux_include
 
 # Source files required to build the target
 CFILES := $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/kernel/printk/*.c))
+CFILES := $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/*.c))
 
 CFLAGS += -Wall -Wextra -g -Werror -Wno-unused-parameter
 CFLAGS += -D__KERNEL__ -D__LITTLE_ENDIAN -std=gnu89
-CFLAGS += -DCONFIG_X86_32
+CFLAGS += -DCONFIG_X86_32 -DCONFIG_HZ=1000 -DCONFIG_TREE_RCU=y
+CFLAGS += -include linux/kconfig.h -include align.h
 
 __BASE := $(objtree)/stage/x86/pc99/include/liblinux_include
 CFLAGS += -I$(__BASE)/x86
