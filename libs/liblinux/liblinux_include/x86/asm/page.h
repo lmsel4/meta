@@ -13,9 +13,6 @@
 #include <asm/page_32.h>
 #endif	/* CONFIG_X86_64 */
 
-/* FIXME: EDIT */
-#include <asm/pgtable.h>
-
 #ifndef __ASSEMBLY__
 
 struct page;

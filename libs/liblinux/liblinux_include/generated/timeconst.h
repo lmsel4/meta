@@ -22,9 +22,6 @@
 #define MSEC_TO_HZ_NUM		1
 #define MSEC_TO_HZ_DEN		1
 
-#define MSEC_PER_SEC 1000
-#define NSEC_PER_SEC (1000 * MSEC_PER_SEC)
-
 #define HZ_TO_USEC_MUL32	U64_C(0xFA000000)
 #define HZ_TO_USEC_ADJ32	U64_C(0x0)
 #define HZ_TO_USEC_SHR32	22

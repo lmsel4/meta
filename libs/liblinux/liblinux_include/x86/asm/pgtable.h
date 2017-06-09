@@ -6,8 +6,6 @@
 
 #include <asm/pgtable_types.h>
 
-#include <asm/special_insns.h>
-
 /*
  * Macro to mark a page protection value as UC-
  */

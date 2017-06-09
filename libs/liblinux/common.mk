@@ -4,20 +4,18 @@ CFLAGS += -Wno-implicit-function-declaration -Wno-incompatible-pointer-types
 CFLAGS += -Wno-pointer-sign -Wno-shift-count-overflow
 
 # CONFIG_*
-CFLAGS += -DCONFIG_X86_32=y -DCONFIG_TREE_RCU=y
+CFLAGS += -DCONFIG_X86_32=y
 CFLAGS += -DCONFIG_MCORE2=y -DCONFIG_HZ=1000
 CFLAGS += -DCONFIG_X86_L1_CACHE_SHIFT=6
 
 # TODO find correct include path defining these
-CFLAGS += -DBITS_PER_LONG=32 -D__LITTLE_ENDIAN 
+CFLAGS += -DBITS_PER_LONG=32
 CFLAGS += -DHZ=1000 -DMSEC_PER_SEC=1000
 
 # some always needed files, TODO too much magic 
-CFLAGS += -D__DEFINED_off_t
-CFLAGS += -include autoconf.h -include seL4/types.h
+CFLAGS += -include autoconf.h
+CFLAGS += -include liblinux_include/generated/autoconf.h
 CFLAGS += -include liblinux_include/linux/kconfig.h
-CFLAGS += -include liblinux_include/linux/types.h
-CFLAGS += -include liblinux_include/x86/asm/msr-index.h
 
 # magic to add the correct Linux header
 __BASE := $(objtree)/stage/x86/pc99/include/liblinux_include
