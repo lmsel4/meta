@@ -10,20 +10,18 @@
 // (mainly support for registering them)
 
 struct device_list {
-    struct cdev* current;
+    struct cdev* cur;
     struct list_head siblings;
-    struct list_head children;
 };
 
 static struct device_list all_devs = {
-    .current = NULL,
-    .siblings = LIST_HEAD_INIT(&all_devs.siblings),
-    .children = LIST_HEAD_INIT(&all_devs.children)
+    .cur = NULL,
+    .siblings = LIST_HEAD_INIT(all_devs.siblings),
 };
 
 void cdev_init(struct cdev *dev, const struct file_operations *ops)
 {
-    cdev->ops = ops;
+    dev->ops = ops;
 }
 
 /**
@@ -37,37 +35,19 @@ struct cdev* cdev_alloc(void)
 }
 
 /**
- * Helper function to find cdev by name for compat'
- **/
-const struct cdev* cdev_by_name(const char* name)
-{
-    struct device_list* current = NULL;
-
-    list_for_each_entry(current, device_list, siblings)
-    {
-        if (strcmp(current->current->name, name) == 0)
-        {
-            return current->current;
-        }
-    }
-
-    return NULL;
-}
-
-/**
  * Registers a cdev with the kernel
  **/
 void cdev_put(struct cdev *p)
 {
-    if (!all_devs.current)
+    if (!all_devs.cur)
     {
-        all_devs.current = p;
+        all_devs.cur = p;
     }
     else
     {
         struct device_list* l = kmalloc(sizeof(struct device_list), GFP_KERNEL);
         assert(l);
-        l->current = p;
+        l->cur = p;
         list_add(&l->siblings, &all_devs.siblings);
     }
 }
@@ -83,8 +63,16 @@ int cdev_add(struct cdev *parent, dev_t dev, unsigned x)
 
 void cdev_del(struct cdev *dev)
 {
-    list_del(&dev->siblings);
-    kfree(dev);
+	struct device_list* cur = NULL;
+
+	list_for_each_entry(cur, &all_devs.siblings, siblings) {
+		if (cur->cur == dev) {
+			list_del(&cur->siblings);
+			break;
+		}
+	}
+
+	kfree(dev);
 }
 
 // TODO: what is this supposed to do?

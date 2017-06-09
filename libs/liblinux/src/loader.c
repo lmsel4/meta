@@ -67,11 +67,11 @@ int traverse_list(struct module_list *list, int (*func) (struct module* mod))
     assert(list);
 
     int res;
-    struct module_list *current;
+    struct module_list *cur;
 
-    for (current = list; current != NULL; current = current->next)
+    for (cur = list; cur != NULL; cur = cur->next)
     {
-        res = func(current->mod);
+        res = func(cur->mod);
 
         if (res < 0)
         {

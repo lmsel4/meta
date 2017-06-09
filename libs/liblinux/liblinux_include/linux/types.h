@@ -17,7 +17,6 @@ typedef __kernel_ino_t		ino_t;
 typedef __kernel_mode_t		mode_t;
 typedef unsigned short		umode_t;
 typedef __u32			nlink_t;
-typedef __kernel_off_t		off_t;
 typedef __kernel_pid_t		pid_t;
 typedef __kernel_daddr_t	daddr_t;
 typedef __kernel_key_t		key_t;

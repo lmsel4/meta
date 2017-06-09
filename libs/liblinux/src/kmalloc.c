@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include <linux/slab.h>
+#include <linux/gfp.h>
 
 void *__kmalloc(size_t size, gfp_t flags)
 {
@@ -9,7 +10,7 @@ void *__kmalloc(size_t size, gfp_t flags)
     if (!ptr)
         return NULL;
 
-    if (GFP_ZERO & flags)
+    if (__GFP_ZERO & flags)
     {
         memset(ptr, 0, size);
     }

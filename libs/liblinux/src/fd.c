@@ -6,13 +6,12 @@
 
 #include <linux/list.h>
 #include <linux/slab.h>
+#include <linux/fs.h>
+#include <linux/cdev.h>
 
 /**
  * This file provides unix like character device access for seL4
  **/
-
-// TODO: implement this in cdev.c
-struct cdev* cdev_by_name(const char* name);
 
 struct opened_file {
     int fd;
@@ -27,17 +26,17 @@ static struct opened_file file_root = {
     .fd = 0,
     .name = NULL,
     .device = NULL,
-    .list = LIST_HEAD_INIT(&file_root.list)
+    .list = LIST_HEAD_INIT(file_root.list)
 };
 
-static struct opened_file *alloc_file(const char* name, struct cdev* d)
+static struct opened_file *alloc_file(const char* name)
 {
-    struct opened_file* f = kmalloc(sizeof(struct opened_file), GFP_KERNEL);
-
     assert(name);
-    assert(d);
 
-    if (!f)
+    struct opened_file* f = kmalloc(sizeof(*f), GFP_KERNEL);
+    struct cdev *d = cdev_alloc();
+
+    if (!f || !d) // TODO free it
     {
         printk("out of memory: %s", strerror(errno));
         return NULL;
@@ -81,15 +80,7 @@ static struct opened_file *file_by_fd(int fd)
 //see: man 3 open
 int open(const char* name)
 {
-    struct cdev* current;
-
-    if (!(current = cdev_by_name(name)))
-    {
-        errno = ENOENT;
-        return -1;
-    }
-
-    struct opened_file* f = alloc_file(name, current);
+    struct opened_file* f = alloc_file(name);
 
     list_add(&f->list, &file_root.list);
 
@@ -130,7 +121,9 @@ ssize_t write(int fd, const void* buf, size_t nbyte)
         return 0;
     }
 
-    return f->device->ops->write(buf, nbyte);
+    return printf(buf);
+
+    //return f->device->ops->write(buf, nbyte);
 }
 
 // see: man 3 read
@@ -150,5 +143,8 @@ ssize_t read(int fd, void *buf, size_t nbyte)
         return 0;
     }
 
-    return f->device->ops->read(buf, nbyte);
+	memset(buf, 'A', nbyte);
+
+    //return f->device->ops->read(buf, nbyte);
+    return nbyte;
 }

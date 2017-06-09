@@ -9,7 +9,7 @@ CFLAGS += -DCONFIG_MCORE2=y -DCONFIG_HZ=1000
 
 # TODO find correct include path defining these
 CFLAGS += -DBITS_PER_LONG=32
-CFLAGS += -DHZ=1000 -DMSEC_PER_SEC=1000
+CFLAGS += -DHZ=1000
 
 # some always needed files, TODO too much magic 
 CFLAGS += -include autoconf.h

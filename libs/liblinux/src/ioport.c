@@ -1,8 +1,8 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #undef NULL
-#include <linux/types>
 
 uint8_t inb(int port)
 {
