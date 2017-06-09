@@ -13,8 +13,8 @@ CFLAGS += -DBITS_PER_LONG=32 -D__LITTLE_ENDIAN
 CFLAGS += -DHZ=1000 -DMSEC_PER_SEC=1000
 
 # some always needed files, TODO too much magic 
-CFLAGS += -include linux/kconfig.h -include align.h -include linux/types.h
 CFLAGS += -include seL4/types.h
+CFLAGS += -include linux/kconfig.h -include align.h -include linux/types.h
 CFLAGS += -include asm/msr-index.h
 CFLAGS += -include $(srctree)/include/generated/autoconf.h
 
