@@ -1,2 +1,2 @@
 libs-$(CONFIG_LIB_LINUX) += liblinux
-liblinux: common
+liblinux:

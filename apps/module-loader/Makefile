@@ -30,7 +30,7 @@ LIBS = c sel4 sel4muslcsys \
        utils sel4simple-default sel4utils sel4debug \
        linux
 
-CFLAGS += -Wall -Wextra -g -Werror -Wno-unused-parameter -g
+CFLAGS += -Wall -Wextra -g -Wno-unused-parameter -g
 
 include $(srctree)/libs/liblinux/common.mk
 
