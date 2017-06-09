@@ -2,15 +2,24 @@
  * A pretty hacky way to support dynamic linux module loading under seL4
  **/
 
+#undef NULL /* Avoid name clashing with kernel */
 #include <dlfcn.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
 
 // Libnux headers
 #include <loader.h>
+
+/* Avoid name clashing with the kernel */
+struct FILE;
+
+#define FILE struct FILE
+
+extern FILE* stderr;
+
+int fprintf(FILE*, const char*, ...);
 
 struct module_list all_modules = {
     .mod = NULL,

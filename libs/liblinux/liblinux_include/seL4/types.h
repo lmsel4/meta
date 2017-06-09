@@ -1,8 +1,6 @@
 #ifndef __SEL4_LINUX_TYPES
 #define __SEL4_LINUX_TYPES
 
-#include <asm/posix_types.h>
-
 // Map linux integer types from userland
 typedef unsigned char __u8;
 typedef unsigned short __u16;
@@ -13,6 +11,11 @@ typedef signed char __s8;
 typedef signed short __s16;
 typedef signed int __s32;
 typedef signed long __s64;
+
+#define PUD_SHIFT	30
+#define PMD_SHIFT       21
+
+typedef struct spinlock spinlock_t;
 
 #ifndef __kernel_long_t
 #define __kernel_long_t __kernel_long_t
@@ -27,7 +30,7 @@ typedef __kernel_ulong_t __kernel_ino_t;
 
 #ifndef __kernel_mode_t
 #define __kernel_mode_t __kernel_mode_t
-typedef unsigned int	__kernel_mode_t;
+typedef unsigned short	__kernel_mode_t;
 #endif
 
 #ifndef __kernel_pid_t
@@ -37,13 +40,13 @@ typedef int		__kernel_pid_t;
 
 #ifndef __kernel_ipc_pid_t
 #define __kernel_ipc_pid_t __kernel_ipc_pid_t
-typedef int		__kernel_ipc_pid_t;
+typedef unsigned short     __kernel_ipc_pid_t;
 #endif
 
 #ifndef __kernel_uid_t
 #define __kernel_uid_t __kernel_uid_t
-typedef unsigned int	__kernel_uid_t;
-typedef unsigned int	__kernel_gid_t;
+typedef unsigned short	__kernel_uid_t;
+typedef unsigned short	__kernel_gid_t;
 #endif
 
 #ifndef __kernel_suseconds_t
@@ -70,7 +73,7 @@ typedef __kernel_gid_t	__kernel_old_gid_t;
 
 #ifndef __kernel_old_dev_t
 #define __kernel_old_dev_t __kernel_old_dev_t
-typedef unsigned int	__kernel_old_dev_t;
+typedef unsigned short	__kernel_old_dev_t;
 #endif
 
 #ifndef __kernel_time_t
