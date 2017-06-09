@@ -13,10 +13,11 @@ CFLAGS += -DBITS_PER_LONG=32 -D__LITTLE_ENDIAN
 CFLAGS += -DHZ=1000 -DMSEC_PER_SEC=1000
 
 # some always needed files, TODO too much magic 
-CFLAGS += -include seL4/types.h
-CFLAGS += -include linux/kconfig.h -include align.h -include linux/types.h
-CFLAGS += -include asm/msr-index.h
-CFLAGS += -include $(srctree)/include/generated/autoconf.h
+CFLAGS += -D__DEFINED_off_t
+CFLAGS += -include autoconf.h -include seL4/types.h
+CFLAGS += -include liblinux_include/linux/kconfig.h
+CFLAGS += -include liblinux_include/linux/types.h
+CFLAGS += -include liblinux_include/x86/asm/msr-index.h
 
 # magic to add the correct Linux header
 __BASE := $(objtree)/stage/x86/pc99/include/liblinux_include
