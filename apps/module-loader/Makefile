@@ -40,7 +40,7 @@ CFLAGS += -DHZ=1000 -DMSEC_PER_SEC=1000
 CFLAGS += -include linux/kconfig.h -DCONFIG_HZ=1000
 CFLAGS += -include seL4/types.h -Wno-implicit-function-declaration
 CFLAGS += -Wno-pointer-sign -Wno-shift-count-overflow
-CFLAGS += -include asm/msr-index.h
+CFLAGS += -include asm/msr-index.h -include $(srctree)/include/generated/autoconf.h
 
 __BASE := $(objtree)/stage/x86/pc99/include/liblinux_include
 CFLAGS += -I$(__BASE)/x86/uapi
