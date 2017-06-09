@@ -55,9 +55,6 @@
 /* We use the MSB mostly because its available */
 #define PREEMPT_NEED_RESCHED	0x80000000
 
-/* preempt_count() and related functions, depends on PREEMPT_NEED_RESCHED */
-#include <asm/preempt.h>
-
 #define hardirq_count()	(preempt_count() & HARDIRQ_MASK)
 #define softirq_count()	(preempt_count() & SOFTIRQ_MASK)
 #define irq_count()	(preempt_count() & (HARDIRQ_MASK | SOFTIRQ_MASK \
@@ -107,6 +104,9 @@
  * Work as expected.
  */
 #define SOFTIRQ_LOCK_OFFSET (SOFTIRQ_DISABLE_OFFSET + PREEMPT_LOCK_OFFSET)
+
+/* preempt_count() and related functions, depends on PREEMPT_NEED_RESCHED */
+#include <asm/preempt.h>
 
 /*
  * Are we running in atomic context?  WARNING: this macro cannot
