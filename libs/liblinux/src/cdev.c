@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#undef WNOHANG
+#undef WUNTRACED
+#undef __inline
+
 #include <linux/printk.h>
 #include <linux/list.h>
 #include <linux/cdev.h>

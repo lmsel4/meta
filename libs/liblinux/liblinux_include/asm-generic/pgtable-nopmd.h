@@ -16,10 +16,10 @@ struct mm_struct;
  */
 typedef struct { pud_t pud; } pmd_t;
 
-#define PMD_SHIFT	PUD_SHIFT
-#define PTRS_PER_PMD	1
-#define PMD_SIZE  	(1UL << PMD_SHIFT)
-#define PMD_MASK  	(~(PMD_SIZE-1))
+//#define PMD_SHIFT	PUD_SHIFT
+//#define PTRS_PER_PMD	1
+//#define PMD_SIZE  	(1UL << PMD_SHIFT)
+//#define PMD_MASK  	(~(PMD_SIZE-1))
 
 /*
  * The "pud_xxx()" functions here are trivial for a folded two-level

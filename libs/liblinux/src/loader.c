@@ -26,7 +26,7 @@ struct module_list all_modules = {
     .next = NULL
 };
 
-int append_module(struct module_list* list, struct module* elem)
+int append_module(struct module_list* list, struct seL4_Module* elem)
 {
     assert(elem);
     assert(list);
@@ -62,7 +62,7 @@ int load_metadata(char** dest, void *dlhandle, metadata_fetcher_t fetcher)
     return 0;
 }
 
-int traverse_list(struct module_list *list, int (*func) (struct module* mod))
+int traverse_list(struct module_list *list, int (*func) (struct seL4_Module* mod))
 {
     assert(list);
 
@@ -85,7 +85,7 @@ int traverse_list(struct module_list *list, int (*func) (struct module* mod))
 /**
  * Loads a module
  **/
-int load_module(struct module *mod) {
+int load_module(struct seL4_Module *mod) {
     assert(mod->init);
     return mod->init();
 }
@@ -93,7 +93,7 @@ int load_module(struct module *mod) {
 /**
  * Unloads a module
  **/
-int unload_module(struct module *mod)
+int unload_module(struct seL4_Module *mod)
 {
     assert(mod->exit);
     return mod->exit();
@@ -110,7 +110,7 @@ int unload_modules(struct module_list *list)
  * @param sym name of the symbol to apply
  * @param mod the module to apply the symbol to
  **/
-int find_sym_and_apply(void *dlhandle, const char *sym, struct module* mod)
+int find_sym_and_apply(void *dlhandle, const char *sym, struct seL4_Module* mod)
 {
     module_handler_t handler = dlsym(dlhandle, sym);
 
@@ -123,9 +123,9 @@ int find_sym_and_apply(void *dlhandle, const char *sym, struct module* mod)
     return handler(mod);
 }
 
-struct module* find_module(const char* obj)
+struct seL4_Module* module_by_name(const char* obj)
 {
-    struct module* out = malloc(sizeof(struct module));
+    struct seL4_Module* out = malloc(sizeof(struct seL4_Module));
     void *dlhandle = NULL;
     int res;
 

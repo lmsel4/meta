@@ -4,7 +4,7 @@
 /**
  * Module information structure
  **/
-struct module {
+struct seL4_Module {
     // Misc module info
     char *name;
     char *author;
@@ -15,6 +15,8 @@ struct module {
     int (*exit) (void);
     void* dlhandle;
 };
+
+typedef unsigned int off_t;
 
 /**
  * List of all known modules
@@ -27,7 +29,7 @@ struct module_list {
 /**
  * Function type that can be applied to a module and fail
  **/
-typedef int (*module_handler_t) (struct module*);
+typedef int (*module_handler_t) (struct seL4_Module*);
 
 /**
  * Metadata fetcher function
@@ -39,7 +41,7 @@ typedef const char* (*metadata_fetcher_t) (void *dlhandle);
  * @param list the current module list
  * @param elem the module to append
  **/
-int append_module(struct module_list *list, struct module* mod);
+int append_module(struct module_list *list, struct seL4_Module* mod);
 
 /**
  * Reads a given metadata from the module refered to by dlhandle
@@ -54,13 +56,13 @@ int load_metadata(char** dest, void* dlhandle, metadata_fetcher_t fetcher);
  * @param list the list of registered modules
  * @param func the function to apply to each module
  **/
-int traverse_list(struct module_list *list, int (*func) (struct module* mod));
+int traverse_list(struct module_list *list, module_handler_t handler);
 
 /**
  * Loads init and exit functions from a given shared object
  * @param obj path to the library on the initrd
  **/
-struct module* find_module(const char* obj);
+struct seL4_Module* module_by_name(const char* obj);
 
 /**
  * Loads all modules currently registered
@@ -73,9 +75,10 @@ int init_modules(struct module_list* modules);
 #define MODULE_NAME_FCN    module_name
 #define MODULE_LICENSE_FCN module_license
 
+
 #define register_init(x)                        \
     {                                           \
-        mod->init = x                        \
+        mod->init = x;                          \
     }
 
 // FIXME: for now we assume every call to module_init is done before call
@@ -83,34 +86,53 @@ int init_modules(struct module_list* modules);
 
 #define register_exit(x)                        \
     {                                           \
-        mod->exit = x;                       \
+        mod->exit = x;                          \
     }
 
 
 //Unsupported in linux kernel
+#undef MODULE_SUPPORTED_DEVICE
 #define MODULE_SUPPORTED_DEVICE(name)
 
 // We don't really care about module tags...
+#undef MODULE_INFO
 #define MODULE_INFO(tag, info)
+
+#undef MODULE_SOFTDEP
 #define MODULE_SOFTDEP(dep) // TODO: handle this to find out about module deps?
 
 // Compat for module metadata
+#undef MODULE_NAME
+#undef MODULE_VERSION
+#undef MODULE_LICENSE
 #define MODULE_NAME(name) char* module_name(void) { return name; }
 #define MODULE_VERSION(ver) char* module_version(void) { return ver; }
 #define MODULE_LICENSE(lic) char* module_license(void) { return lic; }
 
+
+#define KBUILD_MODNAME "lmsel4"
+
+// TODO: for now we don't support module params
+#undef module_param
+#define module_param(name, type, perm)
+
+#undef module_param_named
+#define module_param_named(n, name, type, perm)
+
 // The module loader can fetch pointers to load_module and unload_module from the .so
+#undef module_init
 #define module_init(x)                                  \
     struct module _mod;                                 \
-    int MODULE_LOAD_FCN(struct module *mod)             \
+    void MODULE_LOAD_FCN(struct seL4_Module *mod)       \
     {                                                   \
         register_init(x);                               \
     }                                                   \
 
-#define module_exit(x)                              \
-    int MODULE_UNLOAD_FCN(struct module *mod)       \
-    {                                               \
-        register_exit(x);                           \
+#undef module_exit
+#define module_exit(x)                                  \
+    void MODULE_UNLOAD_FCN(struct seL4_Module *mod)     \
+    {                                                   \
+        register_exit(x);                               \
     }
 
 #endif

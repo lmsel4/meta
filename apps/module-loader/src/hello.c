@@ -12,7 +12,7 @@ struct hello_mod {
 };
 
 static void* ptr;
-static hello_mod* array;
+static struct hello_mod* array;
 
 int hello_init(void)
 {
