@@ -102,6 +102,7 @@ int init_modules(struct module_list* modules);
 #define MODULE_SOFTDEP(dep) // TODO: handle this to find out about module deps?
 
 // Compat for module metadata
+#undef module_name
 #undef MODULE_NAME
 #undef MODULE_VERSION
 #undef MODULE_LICENSE
