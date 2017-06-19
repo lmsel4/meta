@@ -47,6 +47,8 @@ struct cdev* cdev_alloc(void)
  **/
 void cdev_put(struct cdev *p)
 {
+    assert(p);
+
     if (!all_devs.cur)
     {
         all_devs.cur = p;
@@ -65,12 +67,14 @@ void cdev_put(struct cdev *p)
  **/
 int cdev_add(struct cdev *parent, dev_t dev, unsigned x)
 {
-    unimplemented
-        return EINVAL;
+    unimplemented;
+    return EINVAL;
 }
 
 void cdev_del(struct cdev *dev)
 {
+    assert(dev);
+
     struct device_list* cur = NULL;
 
     list_for_each_entry(cur, &all_devs.siblings, siblings) {

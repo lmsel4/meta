@@ -33,6 +33,8 @@
 #include <utils/zf_log.h>
 #include <sel4utils/sel4_zf_logif.h>
 
+#include <loader.h>
+
 #define debug(fmt, ...) fprintf(stderr, "DEBUG: " fmt "\n", ##__VA_ARGS__)
 #define warn(fmt, ...) fprintf(stderr, "WARN: " fmt "\n", ##__VA_ARGS__)
 #define fatal(fmt, ...) { fprintf(stderr, "FATAL: " fmt "\n", ##__VA_ARGS__); exit(1); }
@@ -45,26 +47,39 @@ static char allocator_mem_pool[ALLOCATOR_STATIC_POOL_SIZE];
 #define THREAD_2_STACK_SIZE 512
 static uint64_t thread_2_stack[THREAD_2_STACK_SIZE];
 
+simple_t simple;
+
 extern void name_thread(seL4_CPtr tcb, char *name);
 
-// module hardcode
-extern int  (*hello_init)(void)     asm("__initcall_hello_init6"); // TODO hardcoded
-extern void (*hello_exit)(void)     asm("__exitcall_hello_exit"); // TODO hardcoded
-
 int module_handler() {
-    int err;
+    /* int err; */
+    /* module_init_t mod_init = dlsym(handle, "MODULE_LOAD_FCN"); */
 
-    err = hello_init();
-    if (err)
-        return err;
+    /* ZF_LOGF_IF(mod_init != NULL, "Unable to find module init function!"); */
 
-    hello_exit();
+    /* err = mod_init(); */
+
+    /* if (err) */
+    /*     return err; */
+
+    /* return 0; */
+
+    debug("Module handler spawned successfully!");
+
+    set_root_irq_cap(simple_get_irq_ctrl(&simple));
+    set_root_ioport_cap(simple_get_IOPort_cap(&simple, 0, 256));
+
+    MODULE_LOAD_FCN();
+
+    debug("Ran module init function");
+
+    while(true);
 
     return 0;
 }
 
-int spawn_new_module(vka_t const* const vka, seL4_CPtr const cspace_cap,
-                     seL4_CPtr const pd_cap) {
+int spawn_new_module(vka_t * const vka, seL4_CPtr const cspace_cap,
+                     seL4_CPtr const pd_cap, simple_t simple) {
     int error;
 
     // create new thread control block (TCB)
@@ -109,14 +124,14 @@ int spawn_new_module(vka_t const* const vka, seL4_CPtr const cspace_cap,
     error = seL4_TCB_Resume(tcb_object.cptr);
     ZF_LOGF_IFERR(error, "Failed to start new thread.\n");
 
+    debug("Thread has spawned!");
+
     return error;
 }
 
 int main(void)
 {
     debug("Init start");
-
-    int error;
 
     // get boot info
     seL4_BootInfo *info;
@@ -128,7 +143,6 @@ int main(void)
     name_thread(seL4_CapInitThreadTCB, "hello-2");
 
     // init simple struct to get info from kernel
-    simple_t simple;
     simple_default_init_bootinfo(&simple, info);
 
     // create memory allocator
@@ -152,10 +166,12 @@ int main(void)
     pd_cap = simple_get_pd(&simple);
 
     // spawn the module
-    spawn_new_module(&vka, cspace_cap, pd_cap);
+    spawn_new_module(&vka, cspace_cap, pd_cap, simple);
 
     // end of init
     debug("Init is done!");
+
+    while(true);
 
     return 0;
 }

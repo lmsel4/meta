@@ -1,7 +1,15 @@
+#include <sel4/sel4.h>
+#include <seL4/utils.h>
+
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
 
-#include <seL4/utils.h>
+static seL4_CPtr irq_root;
+
+void set_root_irq_cap(seL4_CPtr cap)
+{
+    irq_root = cap;
+}
 
 int request_threaded_irq(unsigned int irq, irq_handler_t handler,
                      irq_handler_t thread_fn,

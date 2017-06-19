@@ -18,7 +18,7 @@ MODULE_DESCRIPTION("Uart16550 driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("O.34-alpha-rc2");
 
-//#define __DEBUG
+#define __DEBUG
 
 #ifdef __DEBUG
 #define dprintk(fmt, ...)     printk(KERN_DEBUG "%s:%d " fmt,           \

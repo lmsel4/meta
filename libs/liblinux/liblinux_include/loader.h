@@ -26,6 +26,9 @@ struct module_list {
     struct module_list* next;
 };
 
+typedef int (*module_init_t) ();
+
+
 /**
  * Function type that can be applied to a module and fail
  **/
