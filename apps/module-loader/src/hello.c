@@ -55,3 +55,7 @@ void hello_exit(void)
 
 module_init(hello_init);
 module_exit(hello_exit);
+
+MODULE_NAME("lmsel4-hello-world");
+MODULE_VERSION("alpha");
+MODULE_LICENSE("GPL-2.0");

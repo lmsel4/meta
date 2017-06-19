@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include <linux/list.h>
 #include <linux/slab.h>

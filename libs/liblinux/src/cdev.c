@@ -1,13 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #undef WNOHANG
 #undef WUNTRACED
 #undef __inline
 
+#include <seL4/utils.h>
+
 #include <linux/printk.h>
 #include <linux/list.h>
 #include <linux/cdev.h>
+#include <linux/device.h>
 #include <linux/slab.h>
 
 // Compatibility layer for character devices
@@ -61,26 +65,79 @@ void cdev_put(struct cdev *p)
  **/
 int cdev_add(struct cdev *parent, dev_t dev, unsigned x)
 {
-    printk("%s: unimplemented", __FUNCTION__);
-    return EINVAL;
+    unimplemented
+        return EINVAL;
 }
 
 void cdev_del(struct cdev *dev)
 {
-	struct device_list* cur = NULL;
+    struct device_list* cur = NULL;
 
-	list_for_each_entry(cur, &all_devs.siblings, siblings) {
-		if (cur->cur == dev) {
-			list_del(&cur->siblings);
-			break;
-		}
-	}
+    list_for_each_entry(cur, &all_devs.siblings, siblings) {
+        if (cur->cur == dev) {
+            list_del(&cur->siblings);
+            break;
+        }
+    }
 
-	kfree(dev);
+    kfree(dev);
 }
 
 // TODO: what is this supposed to do?
 void cd_forget(struct inode* node)
 {
-    printk("%s: unimplemented", __FUNCTION__);
+    unimplemented;
+}
+
+void device_destroy(struct class *cls, dev_t dev)
+{
+    unimplemented;
+}
+
+struct device* device_create(struct class *cls, struct device *parent, dev_t dev,
+                             void *drvdata, const char* fmt, ...)
+{
+    unimplemented;
+}
+
+struct class* __class_create(struct module* owner, const char* name,
+                             struct lock_class_key *k)
+{
+    unimplemented;
+}
+
+void class_destroy(struct class *cls)
+{
+    unimplemented;
+}
+
+
+void class_unregister(struct class *cls)
+{
+    unimplemented;
+}
+
+struct resource * __request_region(struct resource *res,
+                                   resource_size_t start,
+                                   resource_size_t n,
+                                   const char *name, int flags)
+{
+    unimplemented;
+    return NULL;
+}
+
+void __release_region(struct resource* res, resource_size_t start, resource_size_t n)
+{
+    unimplemented;
+}
+
+void unregister_chrdev_region()
+{
+    unimplemented;
+}
+
+int register_chrdev_region(int start)
+{
+    unimplemented;
+    return 0;
 }

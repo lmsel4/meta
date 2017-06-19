@@ -17,3 +17,17 @@ void *__kmalloc(size_t size, gfp_t flags)
 
     return ptr;
 }
+
+struct kmem_cache *kmalloc_caches[KMALLOC_SHIFT_HIGH + 1];
+struct mem_section mem_section[NR_SECTION_ROOTS][SECTIONS_PER_ROOT];
+
+void *kmem_cache_alloc_trace(struct kmem_cache* c, gfp_t flags, size_t s)
+{
+    return NULL;
+}
+
+void kfree(const void *ptr)
+{
+    if (ptr)
+        free(ptr);
+}
