@@ -1,7 +1,7 @@
 #include <sel4/sel4.h>
 #include <seL4/utils.h>
 
-#include <sel4utils/thread.h>
+#include <sel4utils/irq_server.h>
 
 #include <simple/simple.h>
 #include <simple-default/simple-default.h>
@@ -10,85 +10,52 @@
 
 #define MAX_IRQ 256
 
+extern irq_server_t srv;
+
 typedef int (*irq_handler_t) (int, void *dev_id);
 
-struct lmseL4_IRQHandler {
-    char *name;
-    irq_handler_t handler;
-    unsigned int irq;
-    void *dev_id;
-    bool stopped;
-
-    seL4_CPtr ep;
+struct lmseL4_IRQData {
+    irq_handler_t real_handler;
+    struct irq_data* irq;
+    void *dev;
 };
 
 
-static struct lmseL4_IRQHandler* handlers[MAX_IRQ];
+/**
+ * Mapper from irq_server callback to the actual module provided callback
+ * @param irq the irq number to handle
+ * @param dev the pointer to lmsel4_IRQData we passed when registering the irq
+ **/
+static void lmseL4_InterruptHandler(irq_t irq, void *dev)
+{
+    struct lmseL4_IRQData *data = (struct lmseL4_IRQData *) dev;
+
+    data->real_handler(irq, data->dev);
+
+    irq_data_ack_irq(data->irq);
+}
 
 int request_threaded_irq(unsigned int irq, irq_handler_t handler,
                          irq_handler_t thread_fn,
                          unsigned long flags, const char *name, void *dev)
 {
-    seL4_Error err;
-    cspacepath_t irqCtrl;
-    vka_object_t irq_notif = { 0 };
-    struct lmseL4_IRQHandler* data = malloc(sizeof(struct lmseL4_IRQHandler));
+    struct lmseL4_IRQData *token = malloc(sizeof(struct lmseL4_IRQData));
+    struct irq_data* data = irq_server_register_irq(srv, irq, handler,
+                                                    lmseL4_InterruptHandler);
 
-    vka_alloc_notification(&vka, &irq_notif);
-    vka_cspace_alloc_path(&vka, &irqCtrl);
+    assert(data);
+    assert(token);
 
-    err = simple_get_IRQ_handler(&simple, 3, irqCtrl);
+    ZF_LOGF_IF(data == NULL, "Unable to request irq from irq_server");
 
-    ZF_LOGF_IFERR(err, "Unable to get IRQ handler");
-
-    err = seL4_IRQHandler_SetNotification(irqCtrl.capPtr, irq_notif.cptr);
-
-    ZF_LOGF_IFERR(err, "Unable to set notification...");
-
-    struct lmseL4_IRQHandler tdata = {
-        .name = name,
-        .dev_id = dev,
-        .irq = irq,
-        .ep = irq_notif.cptr,
-        .stopped = false,
-        .handler = handler,
-    };
-
-    *data = tdata;
-
-    handlers[irq] = data;
+    token->real_handler = handler;
+    token->irq = data;
+    token->dev = dev;
 
     return 0;
 }
 
 void free_irq(unsigned int irq, void *data)
 {
-    if (handlers[irq])
-    {
-
-    }
-    else
-    {
-        ZF_LOGE("Unregisterting unregistered IRQ!");
-    }
-}
-
-void interrupt_listener(struct lmseL4_IRQHandler* handler)
-{
-    seL4_Word badge;
-
-    assert(handler);
-
-    while (!handler->stopped)
-    {
-        seL4_Wait(handler->ep, &badge);
-
-        printf("Got interrupt from %x", badge);
-
-        handler->handler(handler->irq, handler->dev_id);
-
-        seL4_IRQHandler_Ack(handler->ep);
-    }
-
-    free(handler);
+    // FIXME: it seems the irq_server does not allow freeing irq...
 }
