@@ -32,12 +32,16 @@
 
 #include <utils/zf_log.h>
 #include <sel4utils/sel4_zf_logif.h>
+#include <sel4utils/irq_server.h>
 
 #include <loader.h>
+#include <common.h>
 
-#define debug(fmt, ...) fprintf(stderr, "DEBUG: " fmt "\n", ##__VA_ARGS__)
-#define warn(fmt, ...) fprintf(stderr, "WARN: " fmt "\n", ##__VA_ARGS__)
-#define fatal(fmt, ...) { fprintf(stderr, "FATAL: " fmt "\n", ##__VA_ARGS__); exit(1); }
+#define print(level, fmt, ...) fprintf(stderr, level " %s:%d: " fmt "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
+
+#define debug(fmt, ...) print("DEBUG", fmt, ##__VA_ARGS__)
+#define warn(fmt, ...) print("WARN", fmt, ##__VA_ARGS__)
+#define fatal(fmt, ...) print("FATAL",  fmt, ##__VA_ARGS__)
 
 // static memory for the allocator to bootstrap with
 #define ALLOCATOR_STATIC_POOL_SIZE ((1 << seL4_PageBits) * 10)
@@ -47,29 +51,22 @@ static char allocator_mem_pool[ALLOCATOR_STATIC_POOL_SIZE];
 #define THREAD_2_STACK_SIZE 512
 static uint64_t thread_2_stack[THREAD_2_STACK_SIZE];
 
-simple_t simple;
-
 extern void name_thread(seL4_CPtr tcb, char *name);
 
+struct seL4_Module module;
+
 int module_handler() {
-    /* int err; */
-    /* module_init_t mod_init = dlsym(handle, "MODULE_LOAD_FCN"); */
-
-    /* ZF_LOGF_IF(mod_init != NULL, "Unable to find module init function!"); */
-
-    /* err = mod_init(); */
-
-    /* if (err) */
-    /*     return err; */
-
-    /* return 0; */
-
     debug("Module handler spawned successfully!");
 
-    set_root_irq_cap(simple_get_irq_ctrl(&simple));
-    set_root_ioport_cap(simple_get_IOPort_cap(&simple, 0, 256));
+    debug("Preparing to run module init function...");
 
-    MODULE_LOAD_FCN();
+    MODULE_LOAD_FCN(&module);
+
+    debug("Module init function found!");
+
+    debug("Running module init function..");
+
+    module.init();
 
     debug("Ran module init function");
 
@@ -78,8 +75,13 @@ int module_handler() {
     return 0;
 }
 
+void test(int a)
+{
+    debug("Param is %d", a);
+}
+
 int spawn_new_module(vka_t * const vka, seL4_CPtr const cspace_cap,
-                     seL4_CPtr const pd_cap, simple_t simple) {
+                     seL4_CPtr const pd_cap, simple_t* simple) {
     int error;
 
     // create new thread control block (TCB)
@@ -129,14 +131,69 @@ int spawn_new_module(vka_t * const vka, seL4_CPtr const cspace_cap,
     return error;
 }
 
+void test_spawn(vka_t * const vka, seL4_CPtr const cspace_cap,
+                seL4_CPtr const pd_cap, simple_t* simple)
+{
+    int error;
+
+    // create new thread control block (TCB)
+    vka_object_t tcb_object = {0};
+    error = vka_alloc_tcb(vka, &tcb_object);
+    ZF_LOGF_IFERR(error, "Failed to allocate new TCB.\n"
+                  "\tVKA given sufficient bootstrap memory?");
+
+    // fill TCB
+    error = seL4_TCB_Configure(tcb_object.cptr, seL4_CapNull,
+                               seL4_PrioProps_new(seL4_MaxPrio, seL4_MaxPrio),
+                               cspace_cap, seL4_NilData, pd_cap, seL4_NilData, 0, 0);
+    ZF_LOGF_IFERR(error, "Failed to configure the new TCB object.\n"
+                  "\tWe're running the new thread with the root thread's CSpace.\n"
+                  "\tWe're running the new thread in the root thread's VSpace.\n"
+                  "\tWe will not be executing any IPC in this app.\n");
+
+    // give name to thread
+    name_thread(tcb_object.cptr, "module-loader: new-module"); // TODO hardcoded
+
+    // create registers
+    seL4_UserContext regs = {0};
+    sel4utils_set_instruction_pointer(&regs, (seL4_Word) test); // TODO hardcoded
+
+    // check stack is aligned correctly
+    const int stack_alignment_requirement = sizeof(seL4_Word) * 2;
+    uintptr_t thread_2_stack_top = (uintptr_t)thread_2_stack + sizeof(thread_2_stack);
+    ZF_LOGF_IF(thread_2_stack_top % (stack_alignment_requirement) != 0,
+               "Stack top isn't aligned correctly to a %dB boundary.\n"
+               "\tDouble check to ensure you're not trampling.",
+               stack_alignment_requirement);
+
+    // add stack pointer to registers
+    sel4utils_set_stack_pointer(&regs, thread_2_stack_top);
+
+    // write registers to TCB
+    error = seL4_TCB_WriteRegisters(tcb_object.cptr, 0, 0, 2, &regs);
+    ZF_LOGF_IFERR(error, "Failed to write the new thread's register set.\n"
+                  "\tDid you write the correct number of registers? See arg4.\n");
+
+    // start thread
+    error = seL4_TCB_Resume(tcb_object.cptr);
+    ZF_LOGF_IFERR(error, "Failed to start new thread.\n");
+
+    *((int *) thread_2_stack_top) = 14;
+
+    debug("Thread has spawned!");
+}
+
 int main(void)
 {
+    int err;
     debug("Init start");
 
     // get boot info
     seL4_BootInfo *info;
     info = seL4_GetBootInfo();
     ZF_LOGF_IF(info == NULL, "Failed to get bootinfo.");
+
+    simple = malloc(sizeof(simple_t));
 
     // set log name
     zf_log_set_tag_prefix("hello-2:");
@@ -157,16 +214,19 @@ int main(void)
     vka_t vka;
     allocman_make_vka(&vka, allocman);
 
+    set_vka(&vka);
+
     // get init capabilities
     seL4_CPtr cspace_cap;
-    cspace_cap = simple_get_cnode(&simple);
+    cspace_cap = simple_get_cnode(simple);
 
     // get init virtual space
     seL4_CPtr pd_cap;
-    pd_cap = simple_get_pd(&simple);
+    pd_cap = simple_get_pd(simple);
 
     // spawn the module
-    spawn_new_module(&vka, cspace_cap, pd_cap, simple);
+    //spawn_new_module(&vka, cspace_cap, pd_cap, simple);
+    test_spawn(&vka, cspace_cap, pd_cap, simple);
 
     // end of init
     debug("Init is done!");

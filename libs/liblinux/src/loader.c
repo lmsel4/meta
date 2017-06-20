@@ -82,6 +82,26 @@ int traverse_list(struct module_list *list, int (*func) (struct seL4_Module* mod
     return 0;
 }
 
+int modulectl_set_param(const char* name, void *value, void *mhandle)
+{
+    unsigned int len = strlen("PARAM_SETTER_PREFIX") + strlen(name);
+    char *setter = kmalloc(len + 1);
+
+    strncpy(setter, "PARAM_SETTER_PREFIX", len);
+    strncat(setter, name, len);
+
+    module_param_setter set_func =  dlsym(mhandle, setter);
+
+    if (!set_func)
+    {
+        printk("Param %s not found\n", name);
+        return -ENOENT;
+    }
+
+    set_func(value);
+    return 0;
+}
+
 /**
  * Loads a module
  **/

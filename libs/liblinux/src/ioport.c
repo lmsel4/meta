@@ -1,14 +1,17 @@
 #include <simple/simple.h>
 #include <sel4/sel4.h>
 
+#include <common.h>
+
 #ifdef CONFIG_PHYS_ADDR_T_64BIT
 typedef u64 phys_addr_t;
 #else
 typedef uint32_t phys_addr_t;
 #endif
 
-typedef phys_addr_t resource_size_t;
+seL4_CPtr io_cap;
 
+typedef phys_addr_t resource_size_t;
 
 struct resource {
     resource_size_t start;
@@ -23,11 +26,10 @@ struct resource ioport_resource = {
 
 };
 
-static seL4_CPtr ioport_cap;
-
-void set_root_ioport_cap(seL4_CPtr cap)
+bool request_region(int port, int nr, UNUSED const char* name)
 {
-    ioport_cap = cap;
+    io_cap = simple_get_IOPort_cap(simple, port, port + nr);
+    return true;
 }
 
 uint8_t inb(int port)

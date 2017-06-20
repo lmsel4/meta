@@ -2,6 +2,12 @@
 #define __LOADER_LINUX_H
 
 /**
+ * Function signature for init and exit functions
+ **/
+typedef int (*module_init_t) ();
+
+
+/**
  * Module information structure
  **/
 struct seL4_Module {
@@ -11,12 +17,14 @@ struct seL4_Module {
     char *license;
     char *version;
 
-    int (*init) (void);
-    int (*exit) (void);
+    module_init_t init, exit;
     void* dlhandle;
 };
 
 typedef unsigned int off_t;
+
+extern int load_module(struct seL4_Module*);
+extern int unload_module(struct seL4_Module*);
 
 /**
  * List of all known modules
@@ -26,8 +34,10 @@ struct module_list {
     struct module_list* next;
 };
 
-typedef int (*module_init_t) ();
-
+/**
+ * Function signature used to set module params by name
+ **/
+typedef int (*module_param_setter) (void *);
 
 /**
  * Function type that can be applied to a module and fail
@@ -73,8 +83,8 @@ struct seL4_Module* module_by_name(const char* obj);
  **/
 int init_modules(struct module_list* modules);
 
-#define MODULE_LOAD_FCN    load_module
-#define MODULE_UNLOAD_FCN  unload_module
+#define MODULE_LOAD_FCN    fetch_module_init
+#define MODULE_UNLOAD_FCN  fetch_module_exit
 #define MODULE_NAME_FCN    module_name
 #define MODULE_LICENSE_FCN module_license
 
@@ -117,8 +127,13 @@ int init_modules(struct module_list* modules);
 #define KBUILD_MODNAME "lmsel4"
 
 // TODO: for now we don't support module params
+#define PARAM_SETTER_PREFIX set_param_
 #undef module_param
-#define module_param(name, type, perm)
+#define module_param(name, type, perm)          \
+    void PARAM_SETTER_PREFIX_##name (void* val)           \
+    {                                           \
+        name = *((type*) val);                  \
+    }
 
 #undef module_param_named
 #define module_param_named(n, name, type, perm)
@@ -126,7 +141,6 @@ int init_modules(struct module_list* modules);
 // The module loader can fetch pointers to load_module and unload_module from the .so
 #undef module_init
 #define module_init(x)                                  \
-    struct module _mod;                                 \
     void MODULE_LOAD_FCN(struct seL4_Module *mod)       \
     {                                                   \
         register_init(x);                               \
