@@ -15,6 +15,8 @@ TARGETS := $(notdir $(SOURCE_DIR)).bin
 # started in a standard way
 ENTRY_POINT := _sel4_start
 
+OFILES := archive.o
+
 # Source files required to build the target
 CFILES   := $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/*.c))
 CFILES   += $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/plat/${PLAT}/*.c))
@@ -28,10 +30,18 @@ LIBS = c sel4 sel4muslcsys \
        sel4simple sel4vka sel4allocman sel4vspace \
        sel4platsupport \
        utils sel4simple-default sel4utils sel4debug \
-       linux
+       linux cpio elf
 
 CFLAGS += -Wall -Wextra -g -Wno-unused-parameter -g
 
 include $(srctree)/libs/liblinux/common.mk
 
 include $(SEL4_COMMON)/common.mk
+
+# targets to generate CPIO archive of elf files
+${COMPONENTS}:
+	false
+
+archive.o: ${COMPONENTS}
+	$(Q)mkdir -p $(dir $@)
+	${COMMON_PATH}/files_to_obj.sh $@ _cpio_archive $^
