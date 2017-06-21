@@ -303,6 +303,7 @@ static void init_struct(struct com_dev *dev) {
 }
 
 static int init_com_dev(struct com_dev *dev, int minor) {
+    dprintk("Creating character device...");
     cdev_init(&dev->cdev, &fops);
     dev->cdev.ops = &fops;
     dev->cdev.owner = THIS_MODULE;
@@ -324,6 +325,7 @@ static int uart16550_init_device(struct com_dev* device, int major, int minor,
     device->base_port = baseport;
 
     /* Setup the hardware device */
+    dprintk("Register character device region..");
     rc = register_chrdev_region(dev, 1, THIS_MODULE->name);
 
     if (rc != 0) {
@@ -332,6 +334,7 @@ static int uart16550_init_device(struct com_dev* device, int major, int minor,
 
     init_struct(device);
 
+    dprintk("Registering IRQ...");
     rc = request_irq(irq_no, interrupt_handler, IRQF_SHARED,
                      THIS_MODULE->name, device);
 
@@ -340,12 +343,14 @@ static int uart16550_init_device(struct com_dev* device, int major, int minor,
     }
 
     /* Create the sysfs info for /dev/comX */
+    dprintk("Setting up sysfs info...");
     com = device_create(uart16550_class, NULL, dev, NULL, name);
 
     if (IS_ERR(com)) {
         goto fail_device_create;
     }
 
+    dprintk("Setting hardware...");
     rc = uart16550_hw_setup_device(baseport, THIS_MODULE->name);
 
     if (rc != 0) {
@@ -394,6 +399,7 @@ static int uart16550_init(void)
     uart16550_class = class_create(THIS_MODULE, "uart16550");
 
     if (have_com1) {
+        dprintk("Initializing COM1");
         rc = uart16550_init_device(&com1_dev, major, 0, "com1",
                                    COM1_BASEPORT, COM1_IRQ);
         if (rc != 0) {
@@ -402,6 +408,7 @@ static int uart16550_init(void)
     }
 
     if (have_com2) {
+        dprintk("Initializing COM2");
         rc = uart16550_init_device(&com2_dev, major, 1, "com2",
                                    COM2_BASEPORT, COM2_IRQ);
 
