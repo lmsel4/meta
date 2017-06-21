@@ -26,10 +26,13 @@ struct resource ioport_resource = {
 
 };
 
-bool request_region(int port, int nr, UNUSED const char* name)
+int request_region(int port, int nr, UNUSED const char* name)
 {
+    printf("Request IOPort region from %d to %d\n", port, port + nr);
+
     io_cap = simple_get_IOPort_cap(simple, port, port + nr);
-    return true;
+
+    return 0;
 }
 
 uint8_t inb(int port)
