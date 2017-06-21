@@ -42,12 +42,6 @@
 #include <loader.h>
 #include <common.h>
 
-#define print(level, fmt, ...) fprintf(stderr, level " %s:%d: " fmt "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
-
-#define debug(fmt, ...) print("DEBUG", fmt, ##__VA_ARGS__)
-#define warn(fmt, ...) print("WARN", fmt, ##__VA_ARGS__)
-#define fatal(fmt, ...) print("FATAL",  fmt, ##__VA_ARGS__)
-
 // static memory for the allocator to bootstrap with
 #define ALLOCATOR_STATIC_POOL_SIZE ((1 << seL4_PageBits) * 10)
 static char allocator_mem_pool[ALLOCATOR_STATIC_POOL_SIZE];
@@ -221,6 +215,8 @@ int main(void)
     srv = make_irq_server(&vspace, &vka, seL4_CapInitThreadCNode, &simple);
 
     ZF_LOGF_IF(srv == NULL, "Unable to create irq server");
+
+    module_handler();
 
     // end of init
     debug("Init is done!");
