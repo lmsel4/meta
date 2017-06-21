@@ -5,12 +5,9 @@
 
 #include <linux/module.h>
 
-struct module priv_module = {
-    .name = "lmsel4",
-};
+extern struct module *priv_module;
 
 #undef THIS_MODULE
-
-#define THIS_MODULE (&priv_module)
+#define THIS_MODULE (priv_module)
 
 #endif

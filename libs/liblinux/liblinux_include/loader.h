@@ -8,6 +8,9 @@ typedef int (*module_init_t) ();
 
 typedef unsigned int off_t;
 
+struct module;
+
+struct module* priv_module;
 
 /**
  * Module information structure
