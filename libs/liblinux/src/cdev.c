@@ -13,6 +13,7 @@
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/slab.h>
+#include <linux/module.h>
 
 // Compatibility layer for character devices
 // (mainly support for registering them)
@@ -47,6 +48,7 @@ struct cdev* cdev_alloc(void)
  **/
 void cdev_put(struct cdev *p)
 {
+    printf("Added cdev number %d to hierarchy\n", p->dev);
     assert(p);
 
     if (!all_devs.cur)
@@ -62,13 +64,12 @@ void cdev_put(struct cdev *p)
     }
 }
 
-/**
- * We don't really care about children do we?
- **/
 int cdev_add(struct cdev *parent, dev_t dev, unsigned x)
 {
-    unimplemented;
-    return EINVAL;
+    printf("Adding cdev %s (owned by %s) to hierarchy\n", parent->dev,
+           parent->owner->name);
+    cdev_put(parent);
+    return 0;
 }
 
 void cdev_del(struct cdev *dev)
@@ -95,30 +96,44 @@ void cd_forget(struct inode* node)
 
 void device_destroy(struct class *cls, dev_t dev)
 {
-    unimplemented;
+    printf("Destroyed device %s\n", cls->name);
 }
 
 struct device* device_create(struct class *cls, struct device *parent, dev_t dev,
                              void *drvdata, const char* fmt, ...)
 {
-    unimplemented;
+    printf("Creating device of class %s\n", cls->name);
+
+    struct device *device = malloc(sizeof(struct device));
+
+    device->init_name = calloc(sizeof(char), strlen(fmt));
+    strncpy(device->init_name, fmt, strlen(fmt));
+
+    return device;
 }
 
 struct class* __class_create(struct module* owner, const char* name,
                              struct lock_class_key *k)
 {
-    unimplemented;
+    struct class* cls = malloc(sizeof(struct class));
+
+    fprintf(stderr, "Created class %s for module %s\n", name, owner->name);
+
+    cls->name = calloc(sizeof(char), strlen(name));
+    strncpy(cls->name, name, strlen(name));
+
+    return cls;
 }
 
 void class_destroy(struct class *cls)
 {
-    unimplemented;
+    fprintf(stderr, "Attempted to destroy class %s", cls->name);
 }
 
 
 void class_unregister(struct class *cls)
 {
-    unimplemented;
+    fprintf("Unregister class %s", cls->name);
 }
 
 struct resource * __request_region(struct resource *res,
@@ -126,13 +141,23 @@ struct resource * __request_region(struct resource *res,
                                    resource_size_t n,
                                    const char *name, int flags)
 {
-    unimplemented;
-    return NULL;
+    printf("Requesting region from %u to %u\n", start, start + n);
+
+    struct resource* out = malloc(sizeof(struct resource));
+
+    out->name = calloc(sizeof(char), strlen(name));
+    strncpy(out->name, name, strlen(name));
+    out->start = start;
+    out->end = start + n;
+    out->flags = flags;
+    out->parent = res;
+
+    return out;
 }
 
 void __release_region(struct resource* res, resource_size_t start, resource_size_t n)
 {
-    unimplemented;
+    printf("Releasing region from %u to %u\n", start, start + n);
 }
 
 void unregister_chrdev_region()
@@ -140,8 +165,9 @@ void unregister_chrdev_region()
     unimplemented;
 }
 
-int register_chrdev_region(int start)
+int register_chrdev_region(dev_t dev, int start, char *name)
 {
-    unimplemented;
+    printf("Registered device region for %s\n", name);
+
     return 0;
 }
