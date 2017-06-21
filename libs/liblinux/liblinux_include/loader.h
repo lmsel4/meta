@@ -6,6 +6,8 @@
  **/
 typedef int (*module_init_t) ();
 
+typedef unsigned int off_t;
+
 
 /**
  * Module information structure
@@ -21,7 +23,6 @@ struct seL4_Module {
     void* dlhandle;
 };
 
-typedef unsigned int off_t;
 
 extern int load_module(struct seL4_Module*);
 extern int unload_module(struct seL4_Module*);
@@ -130,7 +131,7 @@ int init_modules(struct module_list* modules);
 #define PARAM_SETTER_PREFIX set_param_
 #undef module_param
 #define module_param(name, type, perm)          \
-    void PARAM_SETTER_PREFIX_##name (void* val)           \
+    void PARAM_SETTER_PREFIX_##name (void* val) \
     {                                           \
         name = *((type*) val);                  \
     }

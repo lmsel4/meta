@@ -22,4 +22,10 @@ extern void set_simple(simple_t* simple);
 extern void set_vka(vka_t *vkae);
 extern void set_pagedir_cap(seL4_CPtr pd_cap);
 
+#define print(level, fmt, ...) fprintf(stderr, level " %s:%d: " fmt "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
+
+#define debug(fmt, ...) print("DEBUG", fmt, ##__VA_ARGS__)
+#define warn(fmt, ...) print("WARN", fmt, ##__VA_ARGS__)
+#define fatal(fmt, ...) print("FATAL",  fmt, ##__VA_ARGS__)
+
 #endif
