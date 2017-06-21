@@ -43,6 +43,8 @@ int request_threaded_irq(unsigned int irq, irq_handler_t handler,
     struct irq_data* data = irq_server_register_irq(srv, irq, handler,
                                                     lmseL4_InterruptHandler);
 
+    debug("Trying to register IRQ %d", irq);
+
     assert(data);
     assert(token);
 
@@ -52,10 +54,12 @@ int request_threaded_irq(unsigned int irq, irq_handler_t handler,
     token->irq = data;
     token->dev = dev;
 
+    debug("Registered IRQ %d", irq);
     return 0;
 }
 
 void free_irq(unsigned int irq, void *data)
 {
     // FIXME: it seems the irq_server does not allow freeing irq...
+    debug("Tried to free IRQ %d", irq);
 }
