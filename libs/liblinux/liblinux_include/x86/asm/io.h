@@ -273,19 +273,18 @@ static inline void slow_down_io(void)
 
 #endif
 
-#define BUILDIO(bwl, bw, type)                                         \
-    static inline void out##bwl(unsigned type value, int port);         \
+#define BUILDIO(bwl, bw, type)                                          \
+    void out##bwl(unsigned type value, int port);                       \
+    unsigned type in##bwl(int port);                                    \
                                                                         \
-    static inline unsigned type in##bwl(int port);                      \
+    void out##bwl##_p(unsigned type value, int port);                   \
                                                                         \
-    static inline void out##bwl##_p(unsigned type value, int port);     \
+    unsigned type in##bwl##_p(int port);                                \
                                                                         \
-    static inline unsigned type in##bwl##_p(int port);                  \
-                                                                        \
-    static inline void outs##bwl(int port, const void *addr, unsigned long count); \
+    void outs##bwl(int port, const void *addr, unsigned long count);    \
                                                                         \
                                                                         \
-    static inline void ins##bwl(int port, void *addr, unsigned long count); \
+    void ins##bwl(int port, void *addr, unsigned long count);
 
 
 BUILDIO(b, b, char)

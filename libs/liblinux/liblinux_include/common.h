@@ -14,8 +14,6 @@
 
 extern simple_t simple;
 
-extern vka_t *vka;
-
 extern vspace_t *vspace;
 
 #define print(level, fmt, ...) fprintf(stderr, level " %s:%d: " fmt "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)

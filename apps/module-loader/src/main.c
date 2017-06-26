@@ -63,6 +63,8 @@ simple_t simple;
 
 irq_server_t srv;
 
+vka_t vka;
+
 int module_handler() {
     debug("Module handler spawned successfully!");
 
@@ -255,8 +257,6 @@ int main(void)
             seL4_CapInitThreadPD,
             &vka, info);
     ZF_LOGF_IFERR(error, "Unable to boostrap vspace!");
-
-    set_vka(&vka);
 
     srv = make_irq_server(&vspace, &vka, seL4_CapInitThreadCNode, &simple);
     ZF_LOGF_IF(srv == NULL, "Unable to create irq server");

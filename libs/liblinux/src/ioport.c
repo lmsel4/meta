@@ -3,11 +3,7 @@
 
 #include <common.h>
 
-#ifdef CONFIG_PHYS_ADDR_T_64BIT
-typedef u64 phys_addr_t;
-#else
 typedef uint32_t phys_addr_t;
-#endif
 
 seL4_CPtr io_cap;
 
