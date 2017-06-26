@@ -21,6 +21,8 @@ struct opened_file {
     struct list_head list;
 };
 
+extern char *strerror(int);
+
 static int lfd = 1;
 
 static struct opened_file file_root = {

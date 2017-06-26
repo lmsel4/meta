@@ -8,5 +8,7 @@ HDRFILES := $(SOURCE_DIR)/liblinux_include
 CFILES := $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/kernel/printk/*.c))
 CFILES := $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/*.c))
 
+CFLAGS += -Wall -Wextra -Wno-unused-parameter
+
 include $(SOURCE_DIR)/common.mk
 include $(SEL4_COMMON)/common.mk

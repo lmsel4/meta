@@ -9,6 +9,8 @@
 #include <errno.h>
 #include <assert.h>
 
+extern void * kmalloc(size_t, unsigned);
+
 // Libnux headers
 #include <loader.h>
 
@@ -85,7 +87,7 @@ int traverse_list(struct module_list *list, int (*func) (struct seL4_Module* mod
 int modulectl_set_param(const char* name, void *value, void *mhandle)
 {
     unsigned int len = strlen("PARAM_SETTER_PREFIX") + strlen(name);
-    char *setter = kmalloc(len + 1);
+    char *setter = kmalloc(len + 1, 0);
 
     strncpy(setter, "PARAM_SETTER_PREFIX", len);
     strncat(setter, name, len);

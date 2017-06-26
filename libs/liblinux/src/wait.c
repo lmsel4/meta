@@ -30,6 +30,8 @@ __always_inline long prepare_to_wait_event(wait_queue_head_t *q,
                                            wait_queue_t *wait, int state)
 {
     spin_lock(&q->lock);
+
+    return 0;
 }
 
 __always_inline void finish_wait(wait_queue_head_t *q, wait_queue_t *wait)

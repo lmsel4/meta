@@ -18,13 +18,13 @@ MODULE_DESCRIPTION("Uart16550 driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("O.34-alpha-rc2");
 
-#define __DEBUG
-
-#ifdef __DEBUG
-#define dprintk(fmt, ...)     printk(KERN_DEBUG "%s:%d " fmt,           \
-                                     __FILE__, __LINE__, ##__VA_ARGS__)
+#ifndef NDEBUG
+# define xstr(s) str(s)
+# define str(s) #s
+# define dprintk(fmt, ...)	\
+	printk(__FILE__ ":" xstr(__LINE__) ":" fmt "\n", ##__VA_ARGS__)
 #else
-#define dprintk(fmt, ...)     do { } while (0)
+# define dprintk(fmt, ...)     do { } while (0)
 #endif
 
 static struct class *uart16550_class = NULL;
@@ -318,7 +318,7 @@ static int uart16550_init_device(struct com_dev* device, int major, int minor,
     struct device *com;
     dev_t dev = MKDEV(major, minor);
 
-    dprintk("Registering COM%d\n", minor + 1);
+    dprintk("Registering COM%d", minor + 1);
 
     device->minor = minor;
     device->irq_no = irq_no;
@@ -337,6 +337,7 @@ static int uart16550_init_device(struct com_dev* device, int major, int minor,
     dprintk("Registering IRQ...");
     rc = request_irq(irq_no, interrupt_handler, IRQF_SHARED,
                      THIS_MODULE->name, device);
+    dprintk("--> %d", rc);
 
     if (rc != 0) {
         goto fail_request_irq;
@@ -380,8 +381,6 @@ static int uart16550_init(void)
     int have_com1 = behavior & OPTION_COM1, have_com2 = behavior & OPTION_COM2;
     int rc;
 
-    dprintk("Loading module...\n");
-
     switch(behavior) {
     case OPTION_BOTH:
     case OPTION_COM1:
@@ -391,12 +390,19 @@ static int uart16550_init(void)
         return -EINVAL;
     }
 
+    printk("-->\n");
+
     if (0 > major || major > (1 << 13) - 1) {
         dprintk("Invalid major number!");
         return -EINVAL;
     }
 
+    printk("-->\n");
+
+    printk("--> %p\n", THIS_MODULE);
     uart16550_class = class_create(THIS_MODULE, "uart16550");
+
+    printk("-->\n");
 
     if (have_com1) {
         dprintk("Initializing COM1");
@@ -406,6 +412,8 @@ static int uart16550_init(void)
             return rc;
         }
     }
+
+    printk("-->\n");
 
     if (have_com2) {
         dprintk("Initializing COM2");
@@ -417,6 +425,8 @@ static int uart16550_init(void)
         }
     }
 
+    printk("-->\n");
+
     return 0;
 }
 
@@ -425,20 +435,19 @@ static void uart16550_cleanup_device(struct com_dev* device) {
     int baseport = device->base_port;
     int irq_no = device->irq_no;
 
-    dprintk("Cleanup hardware COM%d\n", device->minor + 1);
+    dprintk("Cleanup hardware COM%d", device->minor + 1);
     uart16550_hw_cleanup_device(baseport);
 
-    dprintk("Freeing IRQ\n");
-
+    dprintk("Freeing IRQ");
     free_irq(irq_no, device);
 
-    dprintk("Destroying device...\n");
+    dprintk("Destroying device...");
     device_destroy(uart16550_class, dev);
 
     dprintk("unregister_chrdev_region");
     unregister_chrdev_region(dev, 1);
 
-    dprintk("Deleting cdev\n");
+    dprintk("Deleting cdev");
     cdev_del(&device->cdev);
 }
 
@@ -446,7 +455,7 @@ static void uart16550_cleanup(void)
 {
     int have_com1 = behavior & OPTION_COM1, have_com2 = behavior & OPTION_COM2;
 
-    dprintk("Unloading uart16550 module...\n");
+    dprintk("Unloading uart16550 module...");
 
     if (have_com1) {
         uart16550_cleanup_device(&com1_dev);
