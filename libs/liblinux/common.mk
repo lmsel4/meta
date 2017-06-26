@@ -7,6 +7,7 @@ CFLAGS += -Wno-format-extra-args
 # CONFIG_*
 CFLAGS += -DCONFIG_X86_PAE=y
 CFLAGS += -DCONFIG_MCORE2=y -DCONFIG_HZ=1000
+CFLAGS += -DCONFIG_SLOB
 
 # TODO find correct include path defining these
 CFLAGS += -DBITS_PER_LONG=32

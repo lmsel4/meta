@@ -66,8 +66,6 @@ void cdev_put(struct cdev *p)
 
 int cdev_add(struct cdev *parent, dev_t dev, unsigned x)
 {
-    printf("Adding cdev %s (owned by %s) to hierarchy\n", parent->dev,
-           parent->owner->name);
     cdev_put(parent);
     return 0;
 }
@@ -115,9 +113,9 @@ struct device* device_create(struct class *cls, struct device *parent, dev_t dev
 struct class* __class_create(struct module* owner, const char* name,
                              struct lock_class_key *k)
 {
-    struct class* cls = malloc(sizeof(struct class));
-
-    fprintf(stderr, "Created class %s for module %s\n", name, owner->name);
+    struct class* cls = malloc(sizeof(*cls));
+    if (!cls)
+	    return NULL;
 
     cls->name = calloc(sizeof(char), strlen(name));
     strncpy(cls->name, name, strlen(name));

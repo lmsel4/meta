@@ -20,15 +20,12 @@ struct lmseL4_IRQData {
     void *dev;
 };
 
-
-/**
- * Mapper from irq_server callback to the actual module provided callback
- * @param irq the irq number to handle
- * @param dev the pointer to lmsel4_IRQData we passed when registering the irq
- **/
 static void lmseL4_InterruptHandler(irq_t irq, void *dev)
 {
     struct lmseL4_IRQData *data = (struct lmseL4_IRQData *) dev;
+
+    while (!data->irq)
+	    printf("waiting\n");
 
     data->real_handler(irq, data->dev);
 
@@ -39,15 +36,13 @@ int request_threaded_irq(unsigned int irq, irq_handler_t handler,
                          irq_handler_t thread_fn,
                          unsigned long flags, const char *name, void *dev)
 {
-    struct lmseL4_IRQData *token = malloc(sizeof(struct lmseL4_IRQData));
-    struct irq_data* data = irq_server_register_irq(srv, irq, handler,
-                                                    lmseL4_InterruptHandler);
-
     debug("Trying to register IRQ %d", irq);
 
-    assert(data);
-    assert(token);
+    struct lmseL4_IRQData *token = malloc(sizeof(struct lmseL4_IRQData));
+    ZF_LOGF_IF(token == NULL, "Unable to request memory");
 
+    struct irq_data* data = irq_server_register_irq(srv, irq, lmseL4_InterruptHandler,
+                                                    token);
     ZF_LOGF_IF(data == NULL, "Unable to request irq from irq_server");
 
     token->real_handler = handler;
@@ -55,6 +50,7 @@ int request_threaded_irq(unsigned int irq, irq_handler_t handler,
     token->dev = dev;
 
     debug("Registered IRQ %d", irq);
+
     return 0;
 }
 

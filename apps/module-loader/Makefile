@@ -32,7 +32,7 @@ LIBS = c sel4 sel4muslcsys \
        utils sel4simple-default sel4utils sel4debug \
        linux cpio elf
 
-CFLAGS += -Wall -Wextra -g -Wno-unused-parameter -g
+CFLAGS += -Wall -Wextra -g -Wno-unused-parameter -g -DMODULE=y
 
 include $(srctree)/libs/liblinux/common.mk
 
