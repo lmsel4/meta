@@ -12,6 +12,7 @@ typedef uint32_t phys_addr_t;
 seL4_CPtr io_cap;
 
 typedef phys_addr_t resource_size_t;
+typedef uint8_t u8;
 
 struct resource {
     resource_size_t start;
@@ -26,22 +27,38 @@ struct resource ioport_resource = {
 
 };
 
-int request_region(int port, int nr, UNUSED const char* name)
+struct resource * __request_region(struct resource *res,
+                                   resource_size_t start,
+                                   resource_size_t n,
+                                   const char *name, int flags)
 {
-    printf("Request IOPort region from %d to %d\n", port, port + nr);
+    fprintf(stderr, "Requesting region from %u to %u\n", start, start + n);
 
-    io_cap = simple_get_IOPort_cap(simple, port, port + nr);
+    struct resource* out = malloc(sizeof(struct resource));
 
-    return 0;
+    out->name = calloc(sizeof(char), strlen(name));
+    strncpy(out->name, name, strlen(name));
+    out->start = start;
+    out->end = start + n;
+    out->flags = flags;
+    out->parent = res;
+
+    io_cap = simple_get_IOPort_cap(&simple, start, start + n);
+
+    return out;
 }
 
-uint8_t inb(int port)
+void outb(unsigned char v, int port)
 {
-    return 0;
+    long err = seL4_X86_IOPort_Out8(io_cap, port, v);
+    ZF_LOGF_IFERR(err, "IOPort failed!")
 }
 
-
-uint8_t outb(uint8_t b, int port)
+unsigned char inb(int port)
 {
-    return 0;
+    seL4_X86_IOPort_In8_t res = seL4_X86_IOPort_In8(io_cap, port);
+
+    ZF_LOGF_IFERR(res.error, "IOPort failed!");
+
+    return res.result;
 }

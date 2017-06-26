@@ -15,6 +15,7 @@
 #include <linux/slab.h>
 #include <linux/module.h>
 
+
 // Compatibility layer for character devices
 // (mainly support for registering them)
 
@@ -131,31 +132,13 @@ void class_destroy(struct class *cls)
 
 void class_unregister(struct class *cls)
 {
-    fprintf("Unregister class %s", cls->name);
+    fprintf(stderr, "Unregister class %s", cls->name);
 }
 
-struct resource * __request_region(struct resource *res,
-                                   resource_size_t start,
-                                   resource_size_t n,
-                                   const char *name, int flags)
-{
-    printf("Requesting region from %u to %u\n", start, start + n);
-
-    struct resource* out = malloc(sizeof(struct resource));
-
-    out->name = calloc(sizeof(char), strlen(name));
-    strncpy(out->name, name, strlen(name));
-    out->start = start;
-    out->end = start + n;
-    out->flags = flags;
-    out->parent = res;
-
-    return out;
-}
 
 void __release_region(struct resource* res, resource_size_t start, resource_size_t n)
 {
-    printf("Releasing region from %u to %u\n", start, start + n);
+    fprintf(stderr, "Releasing region from %u to %u\n", start, start + n);
 }
 
 void unregister_chrdev_region()

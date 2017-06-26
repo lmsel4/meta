@@ -12,15 +12,11 @@
 #include <allocman/bootstrap.h>
 #include <allocman/vka.h>
 
-extern simple_t *simple;
+extern simple_t simple;
 
 extern vka_t *vka;
 
 extern vspace_t *vspace;
-
-extern void set_simple(simple_t* simple);
-extern void set_vka(vka_t *vkae);
-extern void set_pagedir_cap(seL4_CPtr pd_cap);
 
 #define print(level, fmt, ...) fprintf(stderr, level " %s:%d: " fmt "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
 

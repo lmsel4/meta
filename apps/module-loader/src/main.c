@@ -59,6 +59,8 @@ extern void name_thread(seL4_CPtr tcb, char *name);
 struct seL4_Module module;
 extern void init_module_struct();
 
+simple_t simple;
+
 irq_server_t srv;
 
 int module_handler() {
@@ -67,6 +69,8 @@ int module_handler() {
     debug("Preparing to run module init function...");
 
     MODULE_LOAD_FCN(&module);
+
+    init_module_struct();
 
     debug("Module init function found!");
 
@@ -79,11 +83,6 @@ int module_handler() {
     while(true);
 
     return 0;
-}
-
-void test()
-{
-    while(true);
 }
 
 irq_server_t make_irq_server(vspace_t *vs, vka_t *vka, seL4_CPtr cspace, simple_t *simple)
@@ -191,21 +190,31 @@ int spawn_new_module(vka_t * const vka, seL4_CPtr const cspace_cap,
     return error;
 }
 
+void test(int *a)
+{
+    printf("%d\n", *a);
+}
+
 void test_spawn(vka_t * const vka, seL4_CPtr const cspace_cap, vspace_t *vspace,
         seL4_CPtr const pd_cap, simple_t* simple)
 {
     int err;
     sel4utils_thread_t thread;
     seL4_CapData_t null = {{0}};
+    sel4utils_thread_config_t config = {
+        .fault_endpoint = seL4_CapNull,
+        .priority = seL4_MaxPrio,
+        .cspace = cspace_cap,
+        .no_ipc_buffer = false,
+        .cspace_root_data = null,
+        .custom_stack_size = false,
+    };
 
-    int a = 5;
-
-    err = sel4utils_configure_thread(vka, vspace, vspace, seL4_CapNull, seL4_MaxPrio,
-            cspace_cap, null, &thread);
+    err = sel4utils_configure_thread_config(vka, vspace, vspace, config, &thread);
 
     ZF_LOGF_IFERR(err, "Unable to configure new thread");
 
-    err = sel4utils_start_thread(&thread, test, &a, NULL, 1);
+    err = sel4utils_start_thread(&thread, module_handler, NULL, NULL, 1);
 
     ZF_LOGF_IFERR(err, "Unable to start new thread!");
 }
@@ -227,7 +236,6 @@ int main(void)
     name_thread(seL4_CapInitThreadTCB, "hello-4");
 
     /* init simple */
-    simple_t simple;
     simple_default_init_bootinfo(&simple, info);
 
     /* create an allocator */
@@ -254,10 +262,9 @@ int main(void)
     ZF_LOGF_IF(srv == NULL, "Unable to create irq server");
 
     // spawn the module
-    spawn_new_module(&vka, simple_get_cnode(&simple), seL4_CapInitThreadPD, &simple);
-    //test_spawn(&vka, seL4_CapInitThreadCNode, &vspace, seL4_CapInitThreadPD, simple);
-
-    //module_handler();
+    //spawn_new_module(&vka, simple_get_cnode(&simple), seL4_CapInitThreadPD, &simple);
+    //test_spawn(&vka, seL4_CapInitThreadCNode, &vspace, seL4_CapInitThreadPD, &simple);
+    module_handler();
 
     // end of init
     debug("Init is done!");
