@@ -220,6 +220,11 @@ err = sel4utils_start_thread(&thread, module_handler, NULL, NULL, 1);
     ZF_LOGF_IFERR(err, "Unable to start new thread!");
 }
 
+void print_irq(struct irq_data *data)
+{
+    printf("Got IRQ: %d\n", data->irq);
+}
+
 int main(void)
 {
     UNUSED int error;

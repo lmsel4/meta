@@ -92,6 +92,8 @@ int init_modules(struct module_list* modules);
 #define MODULE_NAME_FCN    module_name
 #define MODULE_LICENSE_FCN module_license
 
+// HACK: va_start seems to work incorrectly so just replace printk with printf
+#define printk printf
 
 #define register_init(x)                        \
     {                                           \
