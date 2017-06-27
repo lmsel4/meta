@@ -31,7 +31,7 @@ static struct class *uart16550_class = NULL;
 
 static int major = 42;
 
-static int behavior = 0x3;
+static int behavior = 0x2;
 
 struct com_dev {
     DECLARE_KFIFO(inbuffer, uint8_t, FIFO_SIZE);
@@ -264,7 +264,7 @@ irqreturn_t interrupt_handler(int irq_no, void *data)
 
         byte_value = uart16550_hw_read_from_device(device->base_port);
 
-        if (kfifo_put(&device->inbuffer, byte_value) != 0) {
+        if (kfifo_put(&device->inbuffer, byte_value) == 0) {
             dprintk("No more buffer space to store data!\n");
             break;
         }
