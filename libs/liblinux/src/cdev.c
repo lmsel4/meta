@@ -15,6 +15,9 @@
 #include <linux/slab.h>
 #include <linux/module.h>
 
+#define print(level, fmt, ...) fprintf(stderr, level " %s:%d: " fmt "\n", \
+                                       __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define debug(fmt, ...) printf("DEBUG", fmt, ##__VA_ARGS__)
 
 // Compatibility layer for character devices
 // (mainly support for registering them)
@@ -95,13 +98,13 @@ void cd_forget(struct inode* node)
 
 void device_destroy(struct class *cls, dev_t dev)
 {
-    printf("Destroyed device %s\n", cls->name);
+    debug("Destroyed device %s\n", cls->name);
 }
 
 struct device* device_create(struct class *cls, struct device *parent, dev_t dev,
                              void *drvdata, const char* fmt, ...)
 {
-    printf("Creating device of class %s\n", cls->name);
+    debug("Creating device of class %s\n", cls->name);
 
     struct device *device = malloc(sizeof(struct device));
 
@@ -126,19 +129,19 @@ struct class* __class_create(struct module* owner, const char* name,
 
 void class_destroy(struct class *cls)
 {
-    fprintf(stderr, "Attempted to destroy class %s", cls->name);
+    debug("Attempted to destroy class %s", cls->name);
 }
 
 
 void class_unregister(struct class *cls)
 {
-    fprintf(stderr, "Unregister class %s", cls->name);
+    debug("Unregister class %s", cls->name);
 }
 
 
 void __release_region(struct resource* res, resource_size_t start, resource_size_t n)
 {
-    fprintf(stderr, "Releasing region from %u to %u\n", start, start + n);
+    debug("Releasing region from %u to %u\n", start, start + n);
 }
 
 void unregister_chrdev_region()
@@ -148,7 +151,7 @@ void unregister_chrdev_region()
 
 int register_chrdev_region(dev_t dev, int start, char *name)
 {
-    printf("Registered device region for %s\n", name);
+    debug("Registered device region for %s\n", name);
 
     return 0;
 }

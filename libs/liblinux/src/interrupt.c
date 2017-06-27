@@ -20,16 +20,13 @@ struct lmseL4_IRQData {
     void *dev;
 };
 
-static void lmseL4_InterruptHandler(irq_t irq, void *dev)
+static void lmseL4_InterruptHandler(struct irq_data* data)
 {
-    struct lmseL4_IRQData *data = (struct lmseL4_IRQData *) dev;
+    struct lmseL4_IRQData* d = (struct lmseL4_IRQData*) data->token;
 
-    while (!data->irq)
-	    printf("waiting\n");
+    d->real_handler(data->irq, d->dev);
 
-    data->real_handler(irq, data->dev);
-
-    irq_data_ack_irq(data->irq);
+    irq_data_ack_irq(data);
 }
 
 int request_threaded_irq(unsigned int irq, irq_handler_t handler,

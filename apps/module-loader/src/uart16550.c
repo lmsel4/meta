@@ -241,7 +241,7 @@ irqreturn_t interrupt_handler(int irq_no, void *data)
     device = (irq_no == COM1_IRQ) ? &com1_dev : &com2_dev;
     device_num = device->minor + 1;
 
-    dprintk("IH: COM%d IRQ\n", device_num);
+    dprintk("IH: COM%d IRQ %d\n", device_num, irq_no);
 
     device_status = uart16550_hw_get_device_status(device->base_port);
 
@@ -263,8 +263,6 @@ irqreturn_t interrupt_handler(int irq_no, void *data)
         uint8_t byte_value = 0;
 
         byte_value = uart16550_hw_read_from_device(device->base_port);
-
-
 
         if (kfifo_put(&device->inbuffer, byte_value) != 0) {
             dprintk("No more buffer space to store data!\n");
@@ -337,7 +335,6 @@ static int uart16550_init_device(struct com_dev* device, int major, int minor,
     dprintk("Registering IRQ...");
     rc = request_irq(irq_no, interrupt_handler, IRQF_SHARED,
                      THIS_MODULE->name, device);
-    dprintk("--> %d", rc);
 
     if (rc != 0) {
         goto fail_request_irq;
@@ -390,19 +387,12 @@ static int uart16550_init(void)
         return -EINVAL;
     }
 
-    printk("-->\n");
-
     if (0 > major || major > (1 << 13) - 1) {
         dprintk("Invalid major number!");
         return -EINVAL;
     }
 
-    printk("-->\n");
-
-    printk("--> %p\n", THIS_MODULE);
     uart16550_class = class_create(THIS_MODULE, "uart16550");
-
-    printk("-->\n");
 
     if (have_com1) {
         dprintk("Initializing COM1");
@@ -413,8 +403,6 @@ static int uart16550_init(void)
         }
     }
 
-    printk("-->\n");
-
     if (have_com2) {
         dprintk("Initializing COM2");
         rc = uart16550_init_device(&com2_dev, major, 1, "com2",
@@ -424,8 +412,6 @@ static int uart16550_init(void)
             return rc;
         }
     }
-
-    printk("-->\n");
 
     return 0;
 }

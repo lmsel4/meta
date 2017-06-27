@@ -3,9 +3,8 @@
 
 #include <common.h>
 
+//FIXME: need to redefine type because of nameclashes...
 typedef uint32_t phys_addr_t;
-
-seL4_CPtr io_cap;
 
 typedef phys_addr_t resource_size_t;
 typedef uint8_t u8;
@@ -28,7 +27,7 @@ struct resource * __request_region(struct resource *res,
                                    resource_size_t n,
                                    const char *name, int flags)
 {
-    fprintf(stderr, "Requesting region from %u to %u\n", start, start + n);
+    debug("Requesting region from %u to %u\n", start, start + n);
 
     struct resource* out = malloc(sizeof(struct resource));
 
@@ -39,22 +38,20 @@ struct resource * __request_region(struct resource *res,
     out->flags = flags;
     out->parent = res;
 
-    io_cap = simple_get_IOPort_cap(&simple, start, start + n);
-
     return out;
 }
 
 void outb(unsigned char v, int port)
 {
-    long err = seL4_X86_IOPort_Out8(io_cap, port, v);
-    ZF_LOGF_IFERR(err, "IOPort failed!")
+    long err = seL4_X86_IOPort_Out8(seL4_CapIOPort, port, v);
+    ZF_LOGF_IFERR(err, "IOPort output failed!")
 }
 
 unsigned char inb(int port)
 {
-    seL4_X86_IOPort_In8_t res = seL4_X86_IOPort_In8(io_cap, port);
+    seL4_X86_IOPort_In8_t res = seL4_X86_IOPort_In8(seL4_CapIOPort, port);
 
-    ZF_LOGF_IFERR(res.error, "IOPort failed!");
+    ZF_LOGF_IFERR(res.error, "IOPort input failed!");
 
     return res.result;
 }

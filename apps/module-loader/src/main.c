@@ -96,7 +96,7 @@ irq_server_t make_irq_server(vspace_t *vs, vka_t *vka, seL4_CPtr cspace, simple_
     vka_alloc_endpoint(vka, &aep);
 
     error = irq_server_new(vs, vka, cspace, seL4_MaxPrio, simple,
-            aep.cptr, 0, 256, &srv);
+            seL4_CapNull, 0, 256, &srv);
 
     ZF_LOGF_IF(error != 0, "Unable to create irq server!");
 
@@ -215,8 +215,7 @@ void test_spawn(vka_t * const vka, seL4_CPtr const cspace_cap, vspace_t *vspace,
     err = sel4utils_configure_thread_config(vka, vspace, vspace, config, &thread);
 
     ZF_LOGF_IFERR(err, "Unable to configure new thread");
-
-    err = sel4utils_start_thread(&thread, module_handler, NULL, NULL, 1);
+err = sel4utils_start_thread(&thread, module_handler, NULL, NULL, 1);
 
     ZF_LOGF_IFERR(err, "Unable to start new thread!");
 }
