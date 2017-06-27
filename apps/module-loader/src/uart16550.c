@@ -60,7 +60,7 @@ struct wait_list_element {
 static int uart16550_open(struct inode* inode, struct file *filep) {
     int minor = iminor(inode);
 
-    dprintk("Opening device com%d\n", minor + 1);
+    dprintk("Opening device com%d", minor + 1);
 
     if (minor == 0) {
         filep->private_data = (void *) &com1_dev;
@@ -80,7 +80,7 @@ static int uart16550_read(struct file *file, char* user_buffer,
     uint8_t *buffer;
     size_t unwritten_bytes = 0;
 
-    dprintk("READ: reading COM%d\n", device->minor + 1);
+    dprintk("READ: reading COM%d", device->minor + 1);
 
     device_port = device->base_port;
 
@@ -105,7 +105,7 @@ static int uart16550_read(struct file *file, char* user_buffer,
 
     kfree(buffer);
 
-    dprintk("READ: %d bytes from COM%d\n", size,
+    dprintk("READ: %d bytes from COM%d", size,
             device->minor + 1);
 
     wake_up_interruptible(&device->read_wait_queue);
@@ -130,7 +130,7 @@ static int uart16550_write(struct file *file, const char *user_buffer,
         device_port = COM2_BASEPORT;
     }
 
-    dprintk("Writing to COM%d\n", device->minor + 1);
+    dprintk("Writing to COM%d", device->minor + 1);
 
     buffer = kmalloc(sizeof(uint8_t) * size, GFP_KERNEL);
 
@@ -154,7 +154,7 @@ static int uart16550_write(struct file *file, const char *user_buffer,
 
     kfree(buffer);
 
-    dprintk("Written %d bytes to COM%d buffer\n", bytes_copied,
+    dprintk("Written %d bytes to COM%d buffer", bytes_copied,
             device->minor + 1);
 
     wake_up_interruptible(&device->write_wait_queue);
@@ -228,7 +228,7 @@ static long uart16550_ioctl(struct file *f, unsigned int cmd,
 }
 
 static int uart16550_release(struct inode* inode, struct file* file) {
-    dprintk("Closing device com%d...\n", iminor(inode) + 1);
+    dprintk("Closing device com%d...", iminor(inode) + 1);
     return 0;
 }
 
@@ -241,7 +241,7 @@ irqreturn_t interrupt_handler(int irq_no, void *data)
     device = (irq_no == COM1_IRQ) ? &com1_dev : &com2_dev;
     device_num = device->minor + 1;
 
-    dprintk("IH: COM%d IRQ %d\n", device_num, irq_no);
+    dprintk("IH: COM%d IRQ %d", device_num, irq_no);
 
     device_status = uart16550_hw_get_device_status(device->base_port);
 
@@ -249,11 +249,11 @@ irqreturn_t interrupt_handler(int irq_no, void *data)
         uint8_t byte_value = 0;
 
         if (kfifo_get(&device->outbuffer, &byte_value) == 0) {
-            dprintk("IH: No more data COM%d\n", device_num);
+            dprintk("IH: No more data COM%d", device_num);
             break;
         }
 
-        dprintk("IH: %c to COM%d\n", byte_value, device_num);
+        dprintk("IH: %c to COM%d", byte_value, device_num);
 
         uart16550_hw_write_to_device(device->base_port, byte_value);
         device_status = uart16550_hw_get_device_status(device->base_port);
@@ -265,11 +265,11 @@ irqreturn_t interrupt_handler(int irq_no, void *data)
         byte_value = uart16550_hw_read_from_device(device->base_port);
 
         if (kfifo_put(&device->inbuffer, byte_value) == 0) {
-            dprintk("No more buffer space to store data!\n");
+            dprintk("No more buffer space to store data!");
             break;
         }
 
-        dprintk("IH: %c from COM%d\n", byte_value, device_num);
+        dprintk("IH: %c from COM%d", byte_value, device_num);
 
         device_status = uart16550_hw_get_device_status(device->base_port);
     }
