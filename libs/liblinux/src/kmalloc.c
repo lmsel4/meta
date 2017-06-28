@@ -18,6 +18,7 @@ void *__kmalloc(size_t size, gfp_t flags)
     return ptr;
 }
 
+// FIXME: initialize this to some default values
 struct kmem_cache *kmalloc_caches[KMALLOC_SHIFT_HIGH + 1];
 struct mem_section mem_section[NR_SECTION_ROOTS][SECTIONS_PER_ROOT];
 

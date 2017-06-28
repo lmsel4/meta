@@ -82,8 +82,6 @@ int module_handler() {
 
     debug("Ran module init function");
 
-    while(true);
-
     return 0;
 }
 
@@ -96,7 +94,7 @@ irq_server_t make_irq_server(vspace_t *vs, vka_t *vka, seL4_CPtr cspace, simple_
     vka_alloc_endpoint(vka, &aep);
 
     error = irq_server_new(vs, vka, cspace, seL4_MaxPrio, simple,
-            seL4_CapNull, 0, 256, &srv);
+                           seL4_CapNull, 0, 256, &srv);
 
     ZF_LOGF_IF(error != 0, "Unable to create irq server!");
 
@@ -104,7 +102,7 @@ irq_server_t make_irq_server(vspace_t *vs, vka_t *vka, seL4_CPtr cspace, simple_
 }
 
 int spawn_new_module(vka_t * const vka, seL4_CPtr const cspace_cap,
-        seL4_CPtr const pd_cap, simple_t* simple) {
+                     seL4_CPtr const pd_cap, simple_t* simple) {
     int error;
 
     debug("load module");
@@ -115,49 +113,49 @@ int spawn_new_module(vka_t * const vka, seL4_CPtr const cspace_cap,
     vka_object_t tcb_object = {0};
     error = vka_alloc_tcb(vka, &tcb_object);
     ZF_LOGF_IFERR(error, "Failed to allocate new TCB.\n"
-            "\tVKA given sufficient bootstrap memory?");
+                  "\tVKA given sufficient bootstrap memory?");
 
     debug("create IPC");
     vka_object_t ipc_frame_object;
     error = vka_alloc_frame(vka, IPCBUF_FRAME_SIZE_BITS, &ipc_frame_object);
     ZF_LOGF_IFERR(error, "Failed to alloc a frame for the IPC buffer.\n"
-            "\tThe frame size is not the number of bytes, but an exponent.\n"
-            "\tNB: This frame is not an immediately usable, virtually mapped page.\n");
+                  "\tThe frame size is not the number of bytes, but an exponent.\n"
+                  "\tNB: This frame is not an immediately usable, virtually mapped page.\n");
 
     seL4_Word ipc_buffer_vaddr = IPCBUF_VADDR;
 
     error = seL4_ARCH_Page_Map(ipc_frame_object.cptr, pd_cap, ipc_buffer_vaddr,
-            seL4_AllRights, seL4_ARCH_Default_VMAttributes);
+                               seL4_AllRights, seL4_ARCH_Default_VMAttributes);
 
     vka_object_t pt_object;
     error =  vka_alloc_page_table(vka, &pt_object);
     ZF_LOGF_IFERR(error, "Failed to allocate new page table.\n");
 
     error = seL4_ARCH_PageTable_Map(pt_object.cptr, pd_cap,
-            ipc_buffer_vaddr, seL4_ARCH_Default_VMAttributes);
+                                    ipc_buffer_vaddr, seL4_ARCH_Default_VMAttributes);
     ZF_LOGF_IFERR(error, "Failed to map page table into VSpace.\n"
-            "\tWe are inserting a new page table into the top-level table.\n"
-            "\tPass a capability to the new page table, and not for example, the IPC buffer frame vaddr.\n");
+                  "\tWe are inserting a new page table into the top-level table.\n"
+                  "\tPass a capability to the new page table, and not for example, the IPC buffer frame vaddr.\n");
 
     error = seL4_ARCH_Page_Map(ipc_frame_object.cptr, pd_cap,
-            ipc_buffer_vaddr, seL4_AllRights, seL4_ARCH_Default_VMAttributes);
+                               ipc_buffer_vaddr, seL4_AllRights, seL4_ARCH_Default_VMAttributes);
     ZF_LOGF_IFERR(error, "Failed again to map the IPC buffer frame into the VSpace.\n"
-            "\t(It's not supposed to fail.)\n"
-            "\tPass a capability to the IPC buffer's physical frame.\n"
-            "\tRevisit the first seL4_ARCH_Page_Map call above and double-check your arguments.\n");
+                  "\t(It's not supposed to fail.)\n"
+                  "\tPass a capability to the IPC buffer's physical frame.\n"
+                  "\tRevisit the first seL4_ARCH_Page_Map call above and double-check your arguments.\n");
 
     seL4_IPCBuffer *ipcbuf = (seL4_IPCBuffer*)ipc_buffer_vaddr;
     ipcbuf->userData = ipc_buffer_vaddr;
 
     debug("fill TCB");
     error = seL4_TCB_Configure(tcb_object.cptr, seL4_CapNull,
-            seL4_PrioProps_new(seL4_MaxPrio, seL4_MaxPrio),
-            cspace_cap, seL4_NilData, pd_cap, seL4_NilData, ipc_buffer_vaddr,
-            ipc_frame_object.cptr);
+                               seL4_PrioProps_new(seL4_MaxPrio, seL4_MaxPrio),
+                               cspace_cap, seL4_NilData, pd_cap, seL4_NilData, ipc_buffer_vaddr,
+                               ipc_frame_object.cptr);
     ZF_LOGF_IFERR(error, "Failed to configure the new TCB object.\n"
-            "\tWe're running the new thread with the root thread's CSpace.\n"
-            "\tWe're running the new thread in the root thread's VSpace.\n"
-            "\tWe will not be executing any IPC in this app.\n");
+                  "\tWe're running the new thread with the root thread's CSpace.\n"
+                  "\tWe're running the new thread in the root thread's VSpace.\n"
+                  "\tWe will not be executing any IPC in this app.\n");
 
     debug("give name to thread");
     name_thread(tcb_object.cptr, "module-loader: new-module"); // TODO hardcoded
@@ -170,9 +168,9 @@ int spawn_new_module(vka_t * const vka, seL4_CPtr const cspace_cap,
     const int stack_alignment_requirement = sizeof(seL4_Word) * 2;
     uintptr_t thread_2_stack_top = (uintptr_t)thread_2_stack + sizeof(thread_2_stack);
     ZF_LOGF_IF(thread_2_stack_top % (stack_alignment_requirement) != 0,
-            "Stack top isn't aligned correctly to a %dB boundary.\n"
-            "\tDouble check to ensure you're not trampling.",
-            stack_alignment_requirement);
+               "Stack top isn't aligned correctly to a %dB boundary.\n"
+               "\tDouble check to ensure you're not trampling.",
+               stack_alignment_requirement);
 
     debug("add stack pointer to registers");
     sel4utils_set_stack_pointer(&regs, thread_2_stack_top);
@@ -180,7 +178,7 @@ int spawn_new_module(vka_t * const vka, seL4_CPtr const cspace_cap,
     debug("write registers to TCB");
     error = seL4_TCB_WriteRegisters(tcb_object.cptr, 0, 0, 2, &regs);
     ZF_LOGF_IFERR(error, "Failed to write the new thread's register set.\n"
-            "\tDid you write the correct number of registers? See arg4.\n");
+                  "\tDid you write the correct number of registers? See arg4.\n");
 
     debug("start thread");
     debug("about to start: %p", module.init);
@@ -198,7 +196,7 @@ void test(int *a)
 }
 
 void test_spawn(vka_t * const vka, seL4_CPtr const cspace_cap, vspace_t *vspace,
-        seL4_CPtr const pd_cap, simple_t* simple)
+                seL4_CPtr const pd_cap, simple_t* simple)
 {
     int err;
     sel4utils_thread_t thread;
@@ -215,7 +213,7 @@ void test_spawn(vka_t * const vka, seL4_CPtr const cspace_cap, vspace_t *vspace,
     err = sel4utils_configure_thread_config(vka, vspace, vspace, config, &thread);
 
     ZF_LOGF_IFERR(err, "Unable to configure new thread");
-err = sel4utils_start_thread(&thread, module_handler, NULL, NULL, 1);
+    err = sel4utils_start_thread(&thread, module_handler, NULL, NULL, 1);
 
     ZF_LOGF_IFERR(err, "Unable to start new thread!");
 }
@@ -238,18 +236,18 @@ int main(void)
     ZF_LOGF_IF(info == NULL, "Failed to get bootinfo.");
 
     /* Set up logging and give us a name: useful for debugging if the thread faults */
-    zf_log_set_tag_prefix("hello-4:");
-    name_thread(seL4_CapInitThreadTCB, "hello-4");
+    zf_log_set_tag_prefix("module-loader:");
+    name_thread(seL4_CapInitThreadTCB, "module-loader");
 
     /* init simple */
     simple_default_init_bootinfo(&simple, info);
 
     /* create an allocator */
     allocman = bootstrap_use_current_simple(&simple, ALLOCATOR_STATIC_POOL_SIZE,
-            allocator_mem_pool);
+                                            allocator_mem_pool);
     ZF_LOGF_IF(allocman == NULL, "Failed to initialize allocator.\n"
-            "\tMemory pool sufficiently sized?\n"
-            "\tMemory pool pointer valid?\n");
+               "\tMemory pool sufficiently sized?\n"
+               "\tMemory pool pointer valid?\n");
 
     /* create a vka (interface for interacting with the underlying allocator) */
     allocman_make_vka(&vka, allocman);
@@ -257,21 +255,43 @@ int main(void)
     debug("bootstraping vspace..");
 
     error = sel4utils_bootstrap_vspace_with_bootinfo_leaky(&vspace,
-            &data,
-            seL4_CapInitThreadPD,
-            &vka, info);
+                                                           &data,
+                                                           seL4_CapInitThreadPD,
+                                                           &vka, info);
     ZF_LOGF_IFERR(error, "Unable to boostrap vspace!");
 
     srv = make_irq_server(&vspace, &vka, seL4_CapInitThreadCNode, &simple);
     ZF_LOGF_IF(srv == NULL, "Unable to create irq server");
 
-    // spawn the module
-    //spawn_new_module(&vka, simple_get_cnode(&simple), seL4_CapInitThreadPD, &simple);
-    //test_spawn(&vka, seL4_CapInitThreadCNode, &vspace, seL4_CapInitThreadPD, &simple);
+    // spawn module!
     module_handler();
 
     // end of init
     debug("Init is done!");
+
+    debug_device_status();
+
+    int fd = open("/dev/com2", 0);
+    char* buf = calloc(sizeof(char), 256);
+    int r;
+
+    assert(buf);
+    assert(fd > 0);
+
+    while((r = read(fd, buf, 256)) == 0);
+
+    if (r < 0)
+    {
+        debug("Error reading from com2!");
+        return 0;
+    }
+
+    debug("Read from com2: %s", buf);
+    debug("Writing back same data to COM2...");
+
+    write(fd, buf, r);
+
+    debug("All done!");
 
     while(true);
 

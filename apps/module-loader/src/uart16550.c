@@ -60,7 +60,7 @@ struct wait_list_element {
 static int uart16550_open(struct inode* inode, struct file *filep) {
     int minor = iminor(inode);
 
-    dprintk("Opening device com%d", minor + 1);
+    dprintk("Opening device COM%d", minor + 1);
 
     if (minor == 0) {
         filep->private_data = (void *) &com1_dev;
@@ -108,9 +108,6 @@ static int uart16550_read(struct file *file, char* user_buffer,
     dprintk("READ: %d bytes from COM%d", size,
             device->minor + 1);
 
-    wake_up_interruptible(&device->read_wait_queue);
-    uart16550_hw_force_interrupt_reemit(device_port);
-
     return size;
 }
 
@@ -157,7 +154,6 @@ static int uart16550_write(struct file *file, const char *user_buffer,
     dprintk("Written %d bytes to COM%d buffer", bytes_copied,
             device->minor + 1);
 
-    wake_up_interruptible(&device->write_wait_queue);
     uart16550_hw_force_interrupt_reemit(device_port);
 
     return bytes_copied;
@@ -348,7 +344,7 @@ static int uart16550_init_device(struct com_dev* device, int major, int minor,
         goto fail_device_create;
     }
 
-    dprintk("Setting hardware...");
+    dprintk("Setting up hardware...");
     rc = uart16550_hw_setup_device(baseport, THIS_MODULE->name);
 
     if (rc != 0) {

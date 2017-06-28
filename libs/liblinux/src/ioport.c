@@ -9,6 +9,7 @@ typedef uint32_t phys_addr_t;
 typedef phys_addr_t resource_size_t;
 typedef uint8_t u8;
 
+// FIXME: name clash prevents from including linux headers
 struct resource {
     resource_size_t start;
     resource_size_t end;

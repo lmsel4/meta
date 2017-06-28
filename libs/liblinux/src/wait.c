@@ -3,13 +3,15 @@
 
 int remove_wake_func(wait_queue_t *wait, unsigned mode, int flags, void *key)
 {
+    // TODO: implementation
     return 0;
 }
 
 __always_inline void __wake_up(wait_queue_head_t *q, unsigned int mode, int nr,
                                void *key)
 {
-    spin_unlock(&q->lock);
+    // FIXME: replace busy wait with sleeping
+    q->locked = false;
 }
 
 void init_wait_entry(wait_queue_t* q, int flags)

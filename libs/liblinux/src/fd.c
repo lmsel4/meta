@@ -19,9 +19,21 @@ struct opened_file {
     char* name;
     struct cdev* device;
     struct list_head list;
+    struct file* file;
 };
 
 extern char *strerror(int);
+
+struct seL4_Class {
+    struct cdev *cdev;
+    char name[256];
+    dev_t dev;
+
+    struct list_head others;
+
+};
+
+extern struct seL4_Class *device_by_name(const char *name);
 
 static int lfd = 1;
 
@@ -46,6 +58,7 @@ static struct opened_file *alloc_file(const char* name)
     }
 
     f->name = kcalloc(sizeof(char), strlen(name), GFP_KERNEL);
+    f->file = kmalloc(sizeof(struct file), GFP_KERNEL);
 
     assert(f->name);
     strncpy(f->name, name, strlen(name));
@@ -61,6 +74,7 @@ static void free_file(struct opened_file *f)
     assert(f->name);
 
     list_del(&f->list);
+    kfree(f->file);
     kfree(f->name);
     kfree(f);
 }
@@ -84,10 +98,23 @@ static struct opened_file *file_by_fd(int fd)
 int open(const char* name)
 {
     struct opened_file* f = alloc_file(name);
+    struct seL4_Class *cls = device_by_name(name);
+    struct inode inode = {
+        .i_rdev = cls->dev,
+    };
+
+    if (!cls)
+    {
+        return -1;
+    }
+
+    f->device = cls->cdev;
 
     list_add(&f->list, &file_root.list);
 
-    return 0;
+    f->device->ops->open(&inode, f->file);
+
+    return f->fd;
 }
 
 //see: man 3 close
@@ -124,9 +151,8 @@ ssize_t write(int fd, const void* buf, size_t nbyte)
         return 0;
     }
 
-    return printf(buf);
-
-    //return f->device->ops->write(buf, nbyte);
+    // TODO: support offset writing
+    return f->device->ops->write(f->file, buf, nbyte, 0);
 }
 
 // see: man 3 read
@@ -146,8 +172,6 @@ ssize_t read(int fd, void *buf, size_t nbyte)
         return 0;
     }
 
-	memset(buf, 'A', nbyte);
-
-    //return f->device->ops->read(buf, nbyte);
-    return nbyte;
+    // TODO: support offset reading
+    return f->device->ops->read(f->file, buf, nbyte, 0);
 }

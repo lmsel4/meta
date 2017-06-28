@@ -39,6 +39,7 @@ struct wait_bit_queue {
 struct __wait_queue_head {
 	spinlock_t		lock;
 	struct list_head	task_list;
+    volatile bool locked;
 };
 typedef struct __wait_queue_head wait_queue_head_t;
 
@@ -461,9 +462,11 @@ do {									\
 #define wait_event_interruptible(wq, condition)				\
 ({									\
 	int __ret = 0;							\
-	might_sleep();							\
-	if (!(condition))						\
-		__ret = __wait_event_interruptible(wq, condition);	\
+	if (!(condition))                                               \
+        {                                                               \
+            wq.locked = true;                                           \
+            while (wq.locked);                                          \
+        }                                                               \
 	__ret;								\
 })
 

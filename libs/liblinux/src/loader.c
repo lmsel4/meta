@@ -14,7 +14,7 @@ extern void * kmalloc(size_t, unsigned);
 // Libnux headers
 #include <loader.h>
 
-/* Avoid name clashing with the kernel */
+// FIXME: avoid name clash with Linux
 struct FILE;
 
 #define FILE struct FILE

@@ -12,6 +12,7 @@
 #include <linux/list.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
+#include <linux/fs.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 
@@ -27,9 +28,25 @@ struct device_list {
     struct list_head siblings;
 };
 
+struct seL4_Class {
+    struct cdev *cdev;
+    char name[256];
+    dev_t dev;
+
+    struct list_head others;
+
+};
+
 static struct device_list all_devs = {
     .cur = NULL,
     .siblings = LIST_HEAD_INIT(all_devs.siblings),
+};
+
+static struct seL4_Class seL4_RegisteredClasses = {
+    .name = "/dev/default",
+    .others = LIST_HEAD_INIT(seL4_RegisteredClasses.others),
+    .dev = 0,
+    .cdev = NULL,
 };
 
 void cdev_init(struct cdev *dev, const struct file_operations *ops)
@@ -68,9 +85,54 @@ void cdev_put(struct cdev *p)
     }
 }
 
+void debug_device_status()
+{
+    struct seL4_Class *cur;
+
+    list_for_each_entry(cur, &seL4_RegisteredClasses.others, others)
+    {
+        printf("Device %s with device number %d:\n", cur->name, cur->dev);
+        printf("read function at %p\n", cur->cdev->ops->read);
+        printf("write function at %p\n ", cur->cdev->ops->write);
+    }
+}
+
+struct seL4_Class *device_by_name(const char *name)
+{
+    struct seL4_Class *cls;
+
+    list_for_each_entry(cls, &seL4_RegisteredClasses.others, others)
+    {
+        if(strncmp(cls->name, name, 256) == 0)
+        {
+            debug("Found device %s", name);
+            return cls;
+        }
+    }
+
+    debug("Device %s not found!", name);
+
+    return NULL;
+}
+
 int cdev_add(struct cdev *parent, dev_t dev, unsigned x)
 {
-    cdev_put(parent);
+    struct seL4_Class *cur;
+
+    list_for_each_entry(cur, &seL4_RegisteredClasses.others, others)
+    {
+        if (cur->dev == dev)
+        {
+            if (cur->cdev != NULL)
+            {
+                debug("Registered device %d twice!", dev);
+                return -EINVAL;
+            }
+
+            cur->cdev = parent;
+        }
+    }
+
     return 0;
 }
 
@@ -104,12 +166,25 @@ void device_destroy(struct class *cls, dev_t dev)
 struct device* device_create(struct class *cls, struct device *parent, dev_t dev,
                              void *drvdata, const char* fmt, ...)
 {
-    debug("Creating device of class %s\n", cls->name);
+    debug("Creating device %s of class %s\n", fmt, cls->name);
+
+    const char* new_fmt = "/dev/%s";
 
     struct device *device = malloc(sizeof(struct device));
 
     device->init_name = calloc(sizeof(char), strlen(fmt));
     strncpy(device->init_name, fmt, strlen(fmt));
+
+    struct seL4_Class *new = malloc(sizeof(struct seL4_Class));
+
+    if (!new)
+        return NULL;
+
+    snprintf(new->name, 256, new_fmt, fmt);
+    new->dev = dev;
+    new->cdev = NULL;
+
+    list_add(&new->others, &seL4_RegisteredClasses.others);
 
     return device;
 }
@@ -118,8 +193,9 @@ struct class* __class_create(struct module* owner, const char* name,
                              struct lock_class_key *k)
 {
     struct class* cls = malloc(sizeof(*cls));
+
     if (!cls)
-	    return NULL;
+        return NULL;
 
     cls->name = calloc(sizeof(char), strlen(name));
     strncpy(cls->name, name, strlen(name));
@@ -129,9 +205,9 @@ struct class* __class_create(struct module* owner, const char* name,
 
 void class_destroy(struct class *cls)
 {
+    kfree(cls);
     debug("Attempted to destroy class %s", cls->name);
 }
-
 
 void class_unregister(struct class *cls)
 {
@@ -144,12 +220,12 @@ void __release_region(struct resource* res, resource_size_t start, resource_size
     debug("Releasing region from %u to %u\n", start, start + n);
 }
 
-void unregister_chrdev_region()
+void unregister_chrdev_region(dev_t d, unsigned x)
 {
     unimplemented;
 }
 
-int register_chrdev_region(dev_t dev, int start, char *name)
+int register_chrdev_region(dev_t dev, unsigned start, const char *name)
 {
     debug("Registered device region for %s\n", name);
 

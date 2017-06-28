@@ -12,6 +12,7 @@
 
 extern irq_server_t srv;
 
+//FIXME: namespace clashes prevent from including linux headers
 typedef int (*irq_handler_t) (int, void *dev_id);
 
 struct lmseL4_IRQData {
